@@ -1,0 +1,57 @@
+{
+	"name": "node-http-toolkit",
+	"version": "1.0.0",
+	"description": "A small HTTP client toolkit for Node.js: file downloads, HTTP requests, and response decoding.",
+	"type": "module",
+	"types": "./dist/index.d.mts",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.mts",
+				"default": "./dist/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit",
+		"prepublishOnly": "npm run typecheck && npm run build",
+		"dev": "tsdown --watch",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"keywords": [
+		"http",
+		"https",
+		"download",
+		"request",
+		"client",
+		"node"
+	],
+	"author": "ldreier@posteo.de",
+	"license": "ISC",
+	"devDependencies": {
+		"@eslint/js": "10.0.1",
+		"@types/node": "25.9.3",
+		"eslint": "10.5.0",
+		"eslint-config-prettier": "10.1.8",
+		"globals": "17.6.0",
+		"prettier": "3.8.4",
+		"tsdown": "0.22.2",
+		"tsx": "4.22.4",
+		"typescript": "6.0.3",
+		"typescript-eslint": "8.61.0"
+	}
+}
