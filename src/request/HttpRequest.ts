@@ -3,6 +3,12 @@ import * as https from 'https';
 import { HttpMethod } from '../http/HttpMethod.ts';
 import { HttpProtocol } from '../http/HttpProtocol.ts';
 
+/**
+ * Performs a single HTTP or HTTPS request — a GET, or any other method with an
+ * optional request body — and resolves with the raw, undecoded response. Headers
+ * are sent exactly as supplied, in insertion order, giving the caller full
+ * control over the request line and header block.
+ */
 export default class HttpRequest {
 
 	public constructor(

@@ -1,6 +1,11 @@
 import * as http from 'http';
 import * as zlib from 'zlib';
 
+/**
+ * Buffers a response body to completion and decodes it to a string, transparently
+ * reversing br, gzip and deflate content-encodings, including chained encodings
+ * applied in sequence.
+ */
 export default class HttpResponseReader {
 
 	private _bufferBuilder: Buffer[] = [];

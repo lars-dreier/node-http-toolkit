@@ -1,5 +1,10 @@
 import type * as http from 'http';
 
+/**
+ * Case-insensitive helpers for working with request and response header objects:
+ * get, set (replacing any differently-cased duplicate), remove, merge and
+ * lower-case normalization of header keys.
+ */
 export default class HttpHeaderUtil {
 
 	public static getHeader(headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders, key: string): string | undefined {

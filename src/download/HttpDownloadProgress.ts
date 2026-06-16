@@ -1,6 +1,12 @@
 import type IHttpDownload from './IHttpDownload.ts';
 import type IHttpDownloadProgress from './IHttpDownloadProgress.ts';
 
+/**
+ * Measures the throughput of an IHttpDownload. It samples downloaded bytes on a
+ * short interval to compute a bytes-per-second rate and reports current/total
+ * progress on a separate callback interval, stopping automatically once the
+ * download ends.
+ */
 export default class HttpDownloadProgress implements IHttpDownloadProgress {
 
 	public onProgress?: (current: number, total: number) => void;

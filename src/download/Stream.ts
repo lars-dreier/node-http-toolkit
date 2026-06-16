@@ -1,5 +1,10 @@
 import type IHttpDownload from './IHttpDownload.ts';
 
+/**
+ * One byte-range segment of a MultiStreamHttpDownload. It pairs the segment's
+ * underlying download with its index and byte range, and tracks its pause/resume,
+ * skip and completion state.
+ */
 export default class Stream {
 
 	public get isPaused(): boolean {

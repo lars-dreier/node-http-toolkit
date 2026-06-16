@@ -7,6 +7,12 @@ import type IHttpDownload from './IHttpDownload.ts';
 import TimeoutError from '../support/TimeoutError.ts';
 import HttpResponseSize from '../response/HttpResponseSize.ts';
 
+/**
+ * Downloads a single URL to a file on disk. It supports custom request headers,
+ * resuming a partially downloaded file via an HTTP Range request, a per-socket
+ * inactivity timeout, and start/progress/complete/error callbacks, while tracking
+ * total, requested and downloaded byte counts.
+ */
 export default class HttpDownload implements IHttpDownload {
 
 	public onStart?: (download: IHttpDownload) => void;

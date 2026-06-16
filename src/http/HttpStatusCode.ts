@@ -1,3 +1,7 @@
+/**
+ * The HTTP status codes the toolkit acts on, covering the success, redirect and
+ * range-related responses handled during request resolution and downloads.
+ */
 const HttpStatusCode = {
 	NO_CONNECTION: 0,
 	OK: 200,

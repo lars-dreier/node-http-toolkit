@@ -1,3 +1,6 @@
+/**
+ * The HTTP request methods used as verbs when issuing a request.
+ */
 const HttpMethod = {
 	GET: 'GET',
 	HEAD: 'HEAD',

@@ -9,6 +9,14 @@ import type IHttpDownload from './IHttpDownload.ts';
 import Stream from './Stream.ts';
 import HttpResponseSize from '../response/HttpResponseSize.ts';
 
+/**
+ * Downloads a single file in parallel by splitting it into byte-range segments,
+ * each fetched by its own HttpDownload. It caps how many segments run at once,
+ * retries transient stream failures after a delay while treating HTTP errors as
+ * fatal, resumes from partially downloaded segment files, and joins the completed
+ * segments into the final file. Requires a server that advertises byte-range
+ * support.
+ */
 export default class MultiStreamHttpDownload implements IHttpDownload {
 
 	public get streams(): Stream[] {

@@ -2,6 +2,12 @@ import type * as http from 'http';
 import HttpHeaderUtil from '../http/HttpHeaderUtil.ts';
 import { HttpStatusCode } from '../http/HttpStatusCode.ts';
 
+/**
+ * Derives a response's size from its status code and headers. For full (200)
+ * responses the length comes from content-length; for partial (206) responses
+ * content-range is parsed into start, end and total, with the parsed length
+ * validated against content-length.
+ */
 export default class HttpResponseSize {
 
 	private static readonly CONTENT_RANGE_RESPONSE_REGEX: RegExp = /bytes (\d+)-(\d+)\/(\d+)/i;

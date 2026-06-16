@@ -4,6 +4,13 @@ import { HttpMethod } from '../http/HttpMethod.ts';
 import HttpRequest from './HttpRequest.ts';
 import { HttpStatusCode } from '../http/HttpStatusCode.ts';
 
+/**
+ * Drives an HttpRequest through to a usable response. It follows redirects up to
+ * a configurable limit, treats 200 and 206 as success while parsing
+ * content-length and content-range into total and requested byte counts, and
+ * surfaces 4xx/5xx and unexpected status codes as errors. Outcomes are delivered
+ * through the onResolve and onError callbacks.
+ */
 export default class ResolvingHttpRequest {
 
 	public maxRedirects: number = 10;

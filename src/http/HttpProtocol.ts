@@ -1,3 +1,6 @@
+/**
+ * The URL protocol schemes the toolkit dispatches requests for.
+ */
 const HttpProtocol = {
 	Http: 'http:',
 	Https: 'https:'

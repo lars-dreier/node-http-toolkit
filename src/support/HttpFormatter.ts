@@ -1,3 +1,6 @@
+/**
+ * Formats a raw byte count into a human-readable size string (Bytes, KB, MB, ...).
+ */
 export default class HttpFormatter {
 
 	private static readonly SIZES: string[] = ['Bytes', 'KB', 'MB', 'GB', 'TB'];

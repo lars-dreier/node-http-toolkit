@@ -1,5 +1,11 @@
 import type * as http from 'http';
 
+/**
+ * Common contract for a file download: its URL and target path, byte counts,
+ * timeout, lifecycle callbacks and start/resume/stop controls. Implemented by
+ * both single-stream and multi-stream downloads so progress tooling can treat
+ * them interchangeably.
+ */
 export default interface IHttpDownload {
 	onStart?: (download: IHttpDownload) => void;
 	onProgress?: (download: IHttpDownload, chunkSize: number) => void;

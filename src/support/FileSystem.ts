@@ -6,6 +6,11 @@ const open = promisify(fs.open);
 const close = promisify(fs.close);
 const readFile = promisify(fs.readFile);
 
+/**
+ * Small file helpers used by the download code: size, existence, create, remove,
+ * move, directory creation, byte-range reads, and concatenating segment files
+ * into one. Internal plumbing, not part of the public barrel.
+ */
 export default class FileSystem {
 	public static getFileSize(path: string): number {
 		const stats = fs.statSync(path);

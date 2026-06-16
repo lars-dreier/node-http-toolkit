@@ -1,6 +1,11 @@
 import type * as http from 'http';
 import ResolvingHttpRequest from './ResolvingHttpRequest.ts';
 
+/**
+ * Promise-based wrapper around ResolvingHttpRequest. It resolves with the final
+ * response once redirects and status-code handling are done, or rejects on error,
+ * while exposing the resolved total and requested byte counts.
+ */
 export default class AsyncResolvingHttpRequest {
 
 	public maxRedirects?: number;
