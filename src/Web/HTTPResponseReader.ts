@@ -21,7 +21,7 @@ export default class HTTPResponseReader {
 				success(decomp);
 			});
 
-			response.on('data', (data: any) => {
+			response.on('data', (data: unknown) => {
 				if (data instanceof Buffer) {
 					this._bufferBuilder.push(data);
 				}
