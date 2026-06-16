@@ -15,7 +15,7 @@ import globals from 'globals';
 export default tseslint.config(
 	// Files ESLint should never look at.
 	{
-		ignores: ['dist/', 'build/', 'out/', 'node_modules/', 'coverage/'],
+		ignores: ['dist/', 'build/', 'out/', 'node_modules/', 'coverage/', 'tsdown.config.ts'],
 	},
 
 	// Base JavaScript recommendations.
