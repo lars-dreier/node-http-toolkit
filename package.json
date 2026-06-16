@@ -16,15 +16,18 @@
 				"types": "./dist/index.d.cts",
 				"default": "./dist/index.cjs"
 			}
-		}
+		},
+		"./package.json": "./package.json"
 	},
+	"sideEffects": false,
 	"files": [
 		"dist"
 	],
 	"scripts": {
 		"build": "tsdown",
 		"typecheck": "tsc --noEmit",
-		"prepublishOnly": "npm run typecheck && npm run build",
+		"check:exports": "attw --pack .",
+		"prepublishOnly": "npm run typecheck && npm run build && npm run check:exports",
 		"dev": "tsdown --watch",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"lint": "eslint .",
@@ -43,6 +46,7 @@
 	"author": "ldreier@posteo.de",
 	"license": "ISC",
 	"devDependencies": {
+		"@arethetypeswrong/cli": "0.18.3",
 		"@eslint/js": "10.0.1",
 		"@types/node": "25.9.3",
 		"eslint": "10.5.0",
