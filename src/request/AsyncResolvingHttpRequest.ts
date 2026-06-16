@@ -1,7 +1,7 @@
 import type * as http from 'http';
-import ResolvingHTTPRequest from './ResolvingHTTPRequest.ts';
+import ResolvingHttpRequest from './ResolvingHttpRequest.ts';
 
-export default class AsyncResolvingHTTPRequest {
+export default class AsyncResolvingHttpRequest {
 
 	public maxRedirects?: number;
 
@@ -13,7 +13,7 @@ export default class AsyncResolvingHTTPRequest {
 		return this._request?.requestedBytes ?? 0;
 	}
 
-	private _request?: ResolvingHTTPRequest;
+	private _request?: ResolvingHttpRequest;
 
 	public constructor(
 		private readonly _url: string,
@@ -26,7 +26,7 @@ export default class AsyncResolvingHTTPRequest {
 	public resolve(): Promise<http.IncomingMessage> {
 		return new Promise<http.IncomingMessage>(
 			(resolve, reject) => {
-				this._request = new ResolvingHTTPRequest(
+				this._request = new ResolvingHttpRequest(
 					this._url,
 					this._method,
 					this._headers,

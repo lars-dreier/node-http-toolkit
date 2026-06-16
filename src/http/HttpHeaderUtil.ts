@@ -1,6 +1,6 @@
 import type * as http from 'http';
 
-export default class HTTPHeaderUtil {
+export default class HttpHeaderUtil {
 
 	public static getHeader(headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders, key: string): string | undefined {
 		return (headers[key] ?? headers[key.toLowerCase()]) as string | undefined;
@@ -12,15 +12,15 @@ export default class HTTPHeaderUtil {
 	}
 
 	public static setHeader(headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders, key: string, value: string): void {
-		HTTPHeaderUtil.removeHeader(headers, key);
+		HttpHeaderUtil.removeHeader(headers, key);
 		headers[key] = value;
 	}
 
 	public static mergeHeaders(headers: http.IncomingHttpHeaders, newHeaders: http.IncomingHttpHeaders): void {
 		for (const key in newHeaders) {
-			const value: string | undefined = HTTPHeaderUtil.getHeader(newHeaders, key);
+			const value: string | undefined = HttpHeaderUtil.getHeader(newHeaders, key);
 			if (value != null) {
-				HTTPHeaderUtil.setHeader(headers, key, value);
+				HttpHeaderUtil.setHeader(headers, key, value);
 			}
 		}
 	}

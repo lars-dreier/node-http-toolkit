@@ -1,4 +1,4 @@
-const HTTPStatusCode = {
+const HttpStatusCode = {
 	NO_CONNECTION: 0,
 	OK: 200,
 	PARTIAL_CONTENT: 206,
@@ -10,5 +10,5 @@ const HTTPStatusCode = {
 	BAD_REQUEST: 400,
 	REQUESTED_RANGE_NOT_SATISFIABLE: 416
 } as const;
-type HTTPStatusCode = typeof HTTPStatusCode[keyof typeof HTTPStatusCode];
-export { HTTPStatusCode };
+type HttpStatusCode = typeof HttpStatusCode[keyof typeof HttpStatusCode];
+export { HttpStatusCode };

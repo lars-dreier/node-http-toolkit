@@ -1,10 +1,10 @@
 import type * as http from 'http';
 
-export default interface IHTTPDownload {
-	onStart?: (download: IHTTPDownload) => void;
-	onProgress?: (download: IHTTPDownload, chunkSize: number) => void;
-	onComplete?: (download: IHTTPDownload) => void;
-	onError?: (download: IHTTPDownload, error: Error) => void;
+export default interface IHttpDownload {
+	onStart?: (download: IHttpDownload) => void;
+	onProgress?: (download: IHttpDownload, chunkSize: number) => void;
+	onComplete?: (download: IHttpDownload) => void;
+	onError?: (download: IHttpDownload, error: Error) => void;
 	get url(): string;
 	get isDownloading(): boolean;
 	get isComplete(): boolean;

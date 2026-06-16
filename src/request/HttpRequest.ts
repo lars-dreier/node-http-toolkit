@@ -1,9 +1,9 @@
 import * as http from 'http';
 import * as https from 'https';
-import { HTTPMethod } from './HTTPMethod.ts';
-import { HTTPProtocol } from './HTTPProtocol.ts';
+import { HttpMethod } from '../http/HttpMethod.ts';
+import { HttpProtocol } from '../http/HttpProtocol.ts';
 
-export default class HTTPRequest {
+export default class HttpRequest {
 
 	public constructor(
 		private readonly _url: string,
@@ -34,7 +34,7 @@ export default class HTTPRequest {
 				onError(error);
 			});
 
-			if (this._method == HTTPMethod.POST) {
+			if (this._method == HttpMethod.POST) {
 				request.write(this._postData);
 				request.end();
 			}
@@ -56,7 +56,7 @@ export default class HTTPRequest {
 			headers
 		);
 
-		if (method == HTTPMethod.GET) {
+		if (method == HttpMethod.GET) {
 			return this.createGetRequest(url, options, onSuccess);
 		}
 		return this.createGenericRequest(url, options, onSuccess);
@@ -77,13 +77,13 @@ export default class HTTPRequest {
 		onSuccess: (response: http.IncomingMessage) => void
 	): http.ClientRequest {
 		const protocol: string = url.protocol;
-		if (protocol == HTTPProtocol.HTTPS) {
+		if (protocol == HttpProtocol.Https) {
 			return https.get(
 				options,
 				(response: http.IncomingMessage) => onSuccess(response)
 			);
 		}
-		else if (protocol == HTTPProtocol.HTTP) {
+		else if (protocol == HttpProtocol.Http) {
 			return http.get(
 				options,
 				(response: http.IncomingMessage) => onSuccess(response)
@@ -98,13 +98,13 @@ export default class HTTPRequest {
 		onSuccess: (response: http.IncomingMessage) => void
 	): http.ClientRequest {
 		const protocol: string = url.protocol;
-		if (protocol == HTTPProtocol.HTTPS) {
+		if (protocol == HttpProtocol.Https) {
 			return https.request(
 				options,
 				(response: http.IncomingMessage) => onSuccess(response)
 			);
 		}
-		else if (protocol == HTTPProtocol.HTTP) {
+		else if (protocol == HttpProtocol.Http) {
 			return http.request(
 				options,
 				(response: http.IncomingMessage) => onSuccess(response)

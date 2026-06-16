@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as zlib from 'zlib';
 
-export default class HTTPResponseReader {
+export default class HttpResponseReader {
 
 	private _bufferBuilder: Buffer[] = [];
 	private _hasError: boolean = false;

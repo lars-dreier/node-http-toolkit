@@ -1,7 +1,7 @@
-import type IHTTPDownload from './IHTTPDownload.ts';
-import type IHTTPDownloadProgress from './IHTTPDownloadProgress.ts';
+import type IHttpDownload from './IHttpDownload.ts';
+import type IHttpDownloadProgress from './IHttpDownloadProgress.ts';
 
-export default class HTTPDownloadProgress implements IHTTPDownloadProgress {
+export default class HttpDownloadProgress implements IHttpDownloadProgress {
 
 	public onProgress?: (current: number, total: number) => void;
 
@@ -9,7 +9,7 @@ export default class HTTPDownloadProgress implements IHTTPDownloadProgress {
 		return this._bytesPerSecond;
 	}
 
-	private readonly _httpDownload: IHTTPDownload;
+	private readonly _httpDownload: IHttpDownload;
 	private readonly _refreshInterval: number;
 	private readonly _callbackInterval: number;
 
@@ -21,7 +21,7 @@ export default class HTTPDownloadProgress implements IHTTPDownloadProgress {
 	private _bytesPerSecond: number = 0;
 	private _isRunning: boolean = false;
 
-	public constructor(httpDownload: IHTTPDownload, refreshInterval: number = 100, callbackInterval: number = 1000) {
+	public constructor(httpDownload: IHttpDownload, refreshInterval: number = 100, callbackInterval: number = 1000) {
 		this._httpDownload = httpDownload;
 		this._refreshInterval = refreshInterval;
 		this._callbackInterval = callbackInterval;

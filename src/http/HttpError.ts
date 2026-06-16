@@ -1,4 +1,4 @@
-export default class HTTPError extends Error {
+export default class HttpError extends Error {
 	public constructor(
 		public readonly statusCode: number,
 		public readonly statusMessage: string

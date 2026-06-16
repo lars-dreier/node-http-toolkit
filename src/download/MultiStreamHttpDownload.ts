@@ -1,15 +1,15 @@
 import type * as http from 'http';
-import FileSystem from '../System/FileSystem.ts';
-import AsyncResolvingHTTPRequest from './AsyncResolvingHTTPRequest.ts';
-import HTTPDownload from './HTTPDownload.ts';
-import HTTPError from './HTTPError.ts';
-import HTTPHeaderUtil from './HTTPHeaderUtil.ts';
-import { HTTPMethod } from './HTTPMethod.ts';
-import type IHTTPDownload from './IHTTPDownload.ts';
+import FileSystem from '../support/FileSystem.ts';
+import AsyncResolvingHttpRequest from '../request/AsyncResolvingHttpRequest.ts';
+import HttpDownload from './HttpDownload.ts';
+import HttpError from '../http/HttpError.ts';
+import HttpHeaderUtil from '../http/HttpHeaderUtil.ts';
+import { HttpMethod } from '../http/HttpMethod.ts';
+import type IHttpDownload from './IHttpDownload.ts';
 import Stream from './Stream.ts';
-import HTTPResponseSize from './Util/HTTPResponseSize.ts';
+import HttpResponseSize from '../response/HttpResponseSize.ts';
 
-export default class MultiStreamHTTPDownload implements IHTTPDownload {
+export default class MultiStreamHttpDownload implements IHttpDownload {
 
 	public get streams(): Stream[] {
 		return this._streams;
@@ -18,11 +18,11 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 	private static readonly STREAM_ERROR_DELAY: number = 5000;
 	private static readonly STREAM_CHECK_INTERVAL: number = 500;
 
-	public onStart?: (download: IHTTPDownload) => void;
-	public onProgress?: (download: IHTTPDownload, chunkSize: number) => void;
-	public onStreamJoin?: (download: IHTTPDownload) => void;
-	public onComplete?: (download: IHTTPDownload) => void;
-	public onError?: (download: IHTTPDownload, error: Error) => void;
+	public onStart?: (download: IHttpDownload) => void;
+	public onProgress?: (download: IHttpDownload, chunkSize: number) => void;
+	public onStreamJoin?: (download: IHttpDownload) => void;
+	public onComplete?: (download: IHttpDownload) => void;
+	public onError?: (download: IHttpDownload, error: Error) => void;
 	public onStreamStart?: (stream: Stream) => void;
 	public onStreamComplete?: (stream: Stream) => void;
 	public onStreamError?: (stream: Stream, error: Error) => void;
@@ -123,7 +123,7 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 	}
 
 	public setHeader(key: string, value: string): void {
-		HTTPHeaderUtil.setHeader(this._headers, key, value);
+		HttpHeaderUtil.setHeader(this._headers, key, value);
 	}
 
 	public setHeaders(headers: http.OutgoingHttpHeaders): void {
@@ -210,14 +210,14 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 		this._activeStreams.clear();
 		this._pausedStreams.clear();
 
-		const request = new AsyncResolvingHTTPRequest(
+		const request = new AsyncResolvingHttpRequest(
 			this._url,
-			HTTPMethod.GET,
+			HttpMethod.GET,
 			this._headers
 		);
 
 		const response: http.IncomingMessage = await request.resolve();
-		const responseSize: HTTPResponseSize = HTTPResponseSize.parse(response);
+		const responseSize: HttpResponseSize = HttpResponseSize.parse(response);
 
 		const acceptRanges = response.headers['accept-ranges'];
 		const acceptByteRanges: boolean = typeof acceptRanges === 'string' && acceptRanges.includes('bytes');
@@ -258,8 +258,8 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 	private createStream(index: number, start: number, end: number): Stream {
 		const chunkPath: string = this._destinationPath + `.part${index}`;
 		const headers: http.OutgoingHttpHeaders = { ...this._headers };
-		HTTPHeaderUtil.setHeader(headers, 'Range', `bytes=${start}-${end}`);
-		const download = new HTTPDownload(
+		HttpHeaderUtil.setHeader(headers, 'Range', `bytes=${start}-${end}`);
+		const download = new HttpDownload(
 			this._url,
 			chunkPath,
 		);
@@ -269,8 +269,8 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 		download.setHeaders(headers);
 		download.timeout = this._timeout;
 		download.onStart = () => this.onDownloadStreamStart(stream);
-		download.onProgress = (downloadStream: IHTTPDownload, chunkSize: number) => this.onDownloadStreamProgress(downloadStream, chunkSize);
-		download.onError = (_download: IHTTPDownload, error: Error) => this.onDownloadStreamError(stream, error);
+		download.onProgress = (downloadStream: IHttpDownload, chunkSize: number) => this.onDownloadStreamProgress(downloadStream, chunkSize);
+		download.onError = (_download: IHttpDownload, error: Error) => this.onDownloadStreamError(stream, error);
 		download.onComplete = () => { void this.onDownloadStreamComplete(stream); };
 		return stream;
 	}
@@ -313,7 +313,7 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 		this.onStreamStart?.(stream);
 	}
 
-	private onDownloadStreamProgress(_download: IHTTPDownload, chunkSize: number): void {
+	private onDownloadStreamProgress(_download: IHttpDownload, chunkSize: number): void {
 		this._downloadedBytes += chunkSize;
 		this.onProgress?.(this, chunkSize);
 	}
@@ -327,13 +327,13 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 			return;
 		}
 
-		this.pauseStream(stream, MultiStreamHTTPDownload.STREAM_ERROR_DELAY);
+		this.pauseStream(stream, MultiStreamHttpDownload.STREAM_ERROR_DELAY);
 		this.onStreamError?.(stream, error);
 		this.startStreams();
 	}
 
 	private isFatalError(error: Error): boolean {
-		return error instanceof HTTPError;
+		return error instanceof HttpError;
 	}
 
 	private startPausedStreamCheck(): void {
@@ -343,7 +343,7 @@ export default class MultiStreamHTTPDownload implements IHTTPDownload {
 
 		this._resumeStreamsTimeout = setInterval(
 			() => this.checkResumableStreams(),
-			MultiStreamHTTPDownload.STREAM_CHECK_INTERVAL
+			MultiStreamHttpDownload.STREAM_CHECK_INTERVAL
 		);
 	}
 

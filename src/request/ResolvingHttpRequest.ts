@@ -1,10 +1,10 @@
 import type * as http from 'http';
-import HTTPError from './HTTPError.ts';
-import { HTTPMethod } from './HTTPMethod.ts';
-import HTTPRequest from './HTTPRequest.ts';
-import { HTTPStatusCode } from './HTTPStatusCode.ts';
+import HttpError from '../http/HttpError.ts';
+import { HttpMethod } from '../http/HttpMethod.ts';
+import HttpRequest from './HttpRequest.ts';
+import { HttpStatusCode } from '../http/HttpStatusCode.ts';
 
-export default class ResolvingHTTPRequest {
+export default class ResolvingHttpRequest {
 
 	public maxRedirects: number = 10;
 
@@ -44,7 +44,7 @@ export default class ResolvingHTTPRequest {
 
 	private async sendRequest(url: string, method: string, headers: http.OutgoingHttpHeaders = {}, postData?: string): Promise<void> {
 		try {
-			const request = new HTTPRequest(url, method, headers, postData);
+			const request = new HttpRequest(url, method, headers, postData);
 			const result: http.IncomingMessage = await request.send();
 			this.onResponse(result);
 
@@ -55,7 +55,7 @@ export default class ResolvingHTTPRequest {
 
 	private onResponse(response: http.IncomingMessage): void {
 		switch (response.statusCode) {
-			case HTTPStatusCode.OK: {
+			case HttpStatusCode.OK: {
 				const contentLength: string | undefined = response.headers['content-length'];
 				if (contentLength == null) {
 					this.handleError(new Error('Missing content length header.'));
@@ -66,13 +66,13 @@ export default class ResolvingHTTPRequest {
 				this.handleSuccessResponse(response);
 				break;
 			}
-			case HTTPStatusCode.PARTIAL_CONTENT: {
+			case HttpStatusCode.PARTIAL_CONTENT: {
 				const range: string | undefined = response.headers['content-range'];
 				if (range == null) {
 					this.handleError(new Error('Partial content without range header.'));
 					break;
 				}
-				const match: RegExpMatchArray | null = range.match(ResolvingHTTPRequest.CONTENT_RANGE_RESPONSE_REGEX);
+				const match: RegExpMatchArray | null = range.match(ResolvingHttpRequest.CONTENT_RANGE_RESPONSE_REGEX);
 				if (match == null) {
 					this.handleError(new Error('Invalid range header.'));
 					break;
@@ -85,12 +85,12 @@ export default class ResolvingHTTPRequest {
 				this.handleSuccessResponse(response);
 				break;
 			}
-			case HTTPStatusCode.MOVED_PERMANENTLY:
-			case HTTPStatusCode.FOUND:
-				this.handleRedirectResponse(response, HTTPMethod.GET);
+			case HttpStatusCode.MOVED_PERMANENTLY:
+			case HttpStatusCode.FOUND:
+				this.handleRedirectResponse(response, HttpMethod.GET);
 			// falls through
-			case HTTPStatusCode.TEMPORARY_REDIRECT:
-			case HTTPStatusCode.PERMANENT_REDIRECT:
+			case HttpStatusCode.TEMPORARY_REDIRECT:
+			case HttpStatusCode.PERMANENT_REDIRECT:
 				this.handleRedirectResponse(response, this._method);
 				break;
 			default: {
@@ -99,11 +99,11 @@ export default class ResolvingHTTPRequest {
 					this.handleError(new Error('Response without status code.'));
 					break;
 				}
-				if (statusCode >= HTTPStatusCode.BAD_REQUEST) {
+				if (statusCode >= HttpStatusCode.BAD_REQUEST) {
 					this.handleErrorResponse(response);
 				}
-				if (statusCode >= HTTPStatusCode.MULTIPLE_CHOICES ||
-					statusCode < HTTPStatusCode.OK
+				if (statusCode >= HttpStatusCode.MULTIPLE_CHOICES ||
+					statusCode < HttpStatusCode.OK
 				) {
 					this.onError?.(new Error(`Unhandled status code: ${statusCode}`));
 				}
@@ -138,7 +138,7 @@ export default class ResolvingHTTPRequest {
 		response.destroy();
 		const error: Error = response.statusCode == null ?
 			new Error('Response without status code.') :
-			new HTTPError(response.statusCode, response.statusMessage ?? '');
+			new HttpError(response.statusCode, response.statusMessage ?? '');
 		this.handleError(error);
 	}
 

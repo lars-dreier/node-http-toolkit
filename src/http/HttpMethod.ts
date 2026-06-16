@@ -1,4 +1,4 @@
-const HTTPMethod = {
+const HttpMethod = {
 	GET: 'GET',
 	HEAD: 'HEAD',
 	POST: 'POST',
@@ -9,5 +9,5 @@ const HTTPMethod = {
 	TRACE: 'TRACE',
 	PATCH: 'PATCH'
 } as const;
-type HTTPMethod = typeof HTTPMethod[keyof typeof HTTPMethod];
-export { HTTPMethod };
+type HttpMethod = typeof HttpMethod[keyof typeof HttpMethod];
+export { HttpMethod };

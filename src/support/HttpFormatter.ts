@@ -1,4 +1,4 @@
-export default class HTTPFormatter {
+export default class HttpFormatter {
 
 	private static readonly SIZES: string[] = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 

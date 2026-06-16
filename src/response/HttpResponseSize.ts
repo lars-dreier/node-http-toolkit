@@ -1,8 +1,8 @@
 import type * as http from 'http';
-import HTTPHeaderUtil from '../HTTPHeaderUtil.ts';
-import { HTTPStatusCode } from '../HTTPStatusCode.ts';
+import HttpHeaderUtil from '../http/HttpHeaderUtil.ts';
+import { HttpStatusCode } from '../http/HttpStatusCode.ts';
 
-export default class HTTPResponseSize {
+export default class HttpResponseSize {
 
 	private static readonly CONTENT_RANGE_RESPONSE_REGEX: RegExp = /bytes (\d+)-(\d+)\/(\d+)/i;
 
@@ -14,20 +14,20 @@ export default class HTTPResponseSize {
 	) {
 	}
 
-	public static parse(response: http.IncomingMessage): HTTPResponseSize {
+	public static parse(response: http.IncomingMessage): HttpResponseSize {
 		switch (response.statusCode) {
-			case HTTPStatusCode.OK:
-				return HTTPResponseSize.parseCompleteContent(response);
-			case HTTPStatusCode.PARTIAL_CONTENT:
-				return HTTPResponseSize.parsePartialContent(response);
+			case HttpStatusCode.OK:
+				return HttpResponseSize.parseCompleteContent(response);
+			case HttpStatusCode.PARTIAL_CONTENT:
+				return HttpResponseSize.parsePartialContent(response);
 			default:
 				throw new Error(`Unexpected status code: ${response.statusCode ?? 'none'}`);
 		}
 	}
 
-	private static parseCompleteContent(response: http.IncomingMessage): HTTPResponseSize {
-		const contentLength: number = HTTPResponseSize.parseContentLength(response);
-		return new HTTPResponseSize(
+	private static parseCompleteContent(response: http.IncomingMessage): HttpResponseSize {
+		const contentLength: number = HttpResponseSize.parseContentLength(response);
+		return new HttpResponseSize(
 			contentLength,
 			contentLength,
 			0,
@@ -35,15 +35,15 @@ export default class HTTPResponseSize {
 		);
 	}
 
-	private static parsePartialContent(response: http.IncomingMessage): HTTPResponseSize {
+	private static parsePartialContent(response: http.IncomingMessage): HttpResponseSize {
 
-		const contentLength: number = HTTPResponseSize.parseContentLength(response);
+		const contentLength: number = HttpResponseSize.parseContentLength(response);
 
-		const range: string | undefined = HTTPHeaderUtil.getHeader(response.headers, 'content-range');
+		const range: string | undefined = HttpHeaderUtil.getHeader(response.headers, 'content-range');
 		if (range == null) {
 			throw new Error('Partial content without range header.');
 		}
-		const match: RegExpMatchArray | null = range.match(HTTPResponseSize.CONTENT_RANGE_RESPONSE_REGEX);
+		const match: RegExpMatchArray | null = range.match(HttpResponseSize.CONTENT_RANGE_RESPONSE_REGEX);
 		if (match == null) {
 			throw new Error('Invalid range header.');
 		}
@@ -56,7 +56,7 @@ export default class HTTPResponseSize {
 			throw new Error('Content length mismatch.');
 		}
 
-		return new HTTPResponseSize(
+		return new HttpResponseSize(
 			total,
 			contentLength,
 			start,
@@ -65,7 +65,7 @@ export default class HTTPResponseSize {
 	}
 
 	private static parseContentLength(response: http.IncomingMessage): number {
-		const contentLength: string | undefined = HTTPHeaderUtil.getHeader(response.headers, 'content-length');
+		const contentLength: string | undefined = HttpHeaderUtil.getHeader(response.headers, 'content-length');
 		if (contentLength == null) {
 			throw new Error('Missing content length header.');
 		}

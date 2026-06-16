@@ -1,18 +1,18 @@
 import * as fs from 'fs';
 import type * as http from 'http';
-import AsyncResolvingHTTPRequest from './AsyncResolvingHTTPRequest.ts';
-import HTTPHeaderUtil from './HTTPHeaderUtil.ts';
-import { HTTPMethod } from './HTTPMethod.ts';
-import type IHTTPDownload from './IHTTPDownload.ts';
-import TimeoutError from './TimeoutError.ts';
-import HTTPResponseSize from './Util/HTTPResponseSize.ts';
+import AsyncResolvingHttpRequest from '../request/AsyncResolvingHttpRequest.ts';
+import HttpHeaderUtil from '../http/HttpHeaderUtil.ts';
+import { HttpMethod } from '../http/HttpMethod.ts';
+import type IHttpDownload from './IHttpDownload.ts';
+import TimeoutError from '../support/TimeoutError.ts';
+import HttpResponseSize from '../response/HttpResponseSize.ts';
 
-export default class HTTPDownload implements IHTTPDownload {
+export default class HttpDownload implements IHttpDownload {
 
-	public onStart?: (download: IHTTPDownload) => void;
-	public onProgress?: (download: IHTTPDownload, chunkSize: number) => void;
-	public onComplete?: (download: IHTTPDownload) => void;
-	public onError?: (download: IHTTPDownload, error: Error) => void;
+	public onStart?: (download: IHttpDownload) => void;
+	public onProgress?: (download: IHttpDownload, chunkSize: number) => void;
+	public onComplete?: (download: IHttpDownload) => void;
+	public onError?: (download: IHttpDownload, error: Error) => void;
 
 	public get url(): string {
 		return this._url;
@@ -64,7 +64,7 @@ export default class HTTPDownload implements IHTTPDownload {
 	private _downloadResponse: http.IncomingMessage | null = null;
 	private _timeout: number = 0;
 	private _headers: http.OutgoingHttpHeaders = {};
-	private _fileAccessFlags: string = HTTPDownload.APPEND_FLAGS;
+	private _fileAccessFlags: string = HttpDownload.APPEND_FLAGS;
 	private _isComplete: boolean = false;
 
 	public constructor(
@@ -75,7 +75,7 @@ export default class HTTPDownload implements IHTTPDownload {
 	}
 
 	public setHeader(key: string, value: string): void {
-		HTTPHeaderUtil.setHeader(this._headers, key, value);
+		HttpHeaderUtil.setHeader(this._headers, key, value);
 	}
 
 	public setHeaders(headers: http.OutgoingHttpHeaders): void {
@@ -93,12 +93,12 @@ export default class HTTPDownload implements IHTTPDownload {
 		this._requestedBytes = 0;
 		this._downloadedBytes = 0;
 
-		this._fileAccessFlags = HTTPDownload.WRITE_FLAGS;
+		this._fileAccessFlags = HttpDownload.WRITE_FLAGS;
 		const headers: http.OutgoingHttpHeaders = { ...this._headers };
 
 		void this.sendRequest(
 			this._url,
-			HTTPMethod.GET,
+			HttpMethod.GET,
 			headers
 		);
 	}
@@ -114,18 +114,18 @@ export default class HTTPDownload implements IHTTPDownload {
 		this._requestedBytes = 0;
 		this._downloadedBytes = 0;
 
-		this._fileAccessFlags = HTTPDownload.APPEND_FLAGS;
+		this._fileAccessFlags = HttpDownload.APPEND_FLAGS;
 
 		const offset: number = this.getFileOffset(this._destinationPath);
 		const headers = { ...this._headers };
-		const rangeHeader: string | undefined = HTTPHeaderUtil.getHeader(headers, 'Range');
+		const rangeHeader: string | undefined = HttpHeaderUtil.getHeader(headers, 'Range');
 		let requestedStart: number = 0;
 		let requestedEnd: number | null = null;
 		if (rangeHeader == null) {
-			HTTPHeaderUtil.setHeader(headers, 'Range', `bytes=${offset}-`);
+			HttpHeaderUtil.setHeader(headers, 'Range', `bytes=${offset}-`);
 		}
 		else {
-			const match: RegExpMatchArray | null = rangeHeader.match(HTTPDownload.CONTENT_RANGE_REQUEST_REGEX);
+			const match: RegExpMatchArray | null = rangeHeader.match(HttpDownload.CONTENT_RANGE_REQUEST_REGEX);
 			if (match != null) {
 				requestedStart = parseInt(match[1]!, 10);
 				requestedEnd = parseInt(match[2]!, 10);
@@ -137,10 +137,10 @@ export default class HTTPDownload implements IHTTPDownload {
 			return;
 		}
 
-		HTTPHeaderUtil.setHeader(headers, 'Range', `bytes=${start}-${requestedEnd ?? ''}`);
+		HttpHeaderUtil.setHeader(headers, 'Range', `bytes=${start}-${requestedEnd ?? ''}`);
 		void this.sendRequest(
 			this._url,
-			HTTPMethod.GET,
+			HttpMethod.GET,
 			headers
 		);
 	}
@@ -158,9 +158,9 @@ export default class HTTPDownload implements IHTTPDownload {
 
 	private async sendRequest(url: string, method: string, headers: http.OutgoingHttpHeaders = {}): Promise<void> {
 		try {
-			const request = new AsyncResolvingHTTPRequest(url, method, headers);
+			const request = new AsyncResolvingHttpRequest(url, method, headers);
 			const result: http.IncomingMessage = await request.resolve();
-			const responseSize = HTTPResponseSize.parse(result);
+			const responseSize = HttpResponseSize.parse(result);
 			this._totalBytes = responseSize.totalBytes;
 			this._requestedBytes = responseSize.contentLength;
 			this.handleSuccessResponse(result);

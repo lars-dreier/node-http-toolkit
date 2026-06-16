@@ -1,4 +1,4 @@
-import type IHTTPDownload from './IHTTPDownload.ts';
+import type IHttpDownload from './IHttpDownload.ts';
 
 export default class Stream {
 
@@ -33,7 +33,7 @@ export default class Stream {
 	private readonly _size: number;
 
 	public constructor(
-		public readonly download: IHTTPDownload,
+		public readonly download: IHttpDownload,
 		public readonly index: number,
 		public readonly start: number,
 		public readonly end: number
