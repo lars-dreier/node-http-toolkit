@@ -3,9 +3,9 @@
 // Roles (see .claude/documentation/code-style.md):
 //   - eslint            : the linting engine + core JS rules
 //   - typescript-eslint : TypeScript parser + TS-aware rules
-//   - eslint-config-prettier : disables stylistic rules that would fight Prettier
+//   - eslint-config-prettier : disables ESLint's layout rules so they never fight the formatter (dprint)
 //
-// Prettier owns layout. ESLint owns correctness and project conventions.
+// dprint owns layout. ESLint owns correctness and project conventions.
 
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';

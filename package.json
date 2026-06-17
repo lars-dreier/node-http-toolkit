@@ -34,8 +34,8 @@
 		"test:watch": "tsx --test --watch \"test/**/*.test.ts\"",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"format": "prettier --write .",
-		"format:check": "prettier --check ."
+		"format": "dprint fmt",
+		"format:check": "dprint check"
 	},
 	"keywords": [
 		"http",
@@ -51,10 +51,10 @@
 		"@arethetypeswrong/cli": "0.18.3",
 		"@eslint/js": "10.0.1",
 		"@types/node": "25.9.3",
+		"dprint": "0.54.0",
 		"eslint": "10.5.0",
 		"eslint-config-prettier": "10.1.8",
 		"globals": "17.6.0",
-		"prettier": "3.8.4",
 		"tsdown": "0.22.2",
 		"tsx": "4.22.4",
 		"typescript": "6.0.3",
