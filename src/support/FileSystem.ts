@@ -45,7 +45,7 @@ export default class FileSystem {
 	}
 
 	public static async readBytes(path: string, offset: number = 0, numBytes?: number): Promise<Buffer> {
-		const length: number = !numBytes ? this.getFileSize(path) - offset : numBytes;
+		const length: number = numBytes === undefined ? this.getFileSize(path) - offset : numBytes;
 		return new Promise((resolve, reject
 		) => {
 			fs.open(path, 'r', (err, fd) => {
