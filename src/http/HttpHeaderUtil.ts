@@ -1,9 +1,8 @@
 import type * as http from 'http';
 
 /**
- * Case-insensitive helpers for working with request and response header objects:
- * get, set (replacing any differently-cased duplicate), remove, merge and
- * lower-case normalization of header keys.
+ * Helpers for reading and modifying HTTP header objects: get, set, remove, merge
+ * and normalize header keys.
  */
 export default class HttpHeaderUtil {
 
