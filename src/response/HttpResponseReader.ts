@@ -15,25 +15,51 @@ export default class HttpResponseReader {
 
 		return new Promise<string>((success, error) => {
 
-			response.on('close', () => {
+			let ended: boolean = false;
 
+			const fail = (reason: Error): void => {
+				this._hasError = true;
+				error(reason);
+			};
+
+			response.on('data', (data: unknown) => {
 				if (this._hasError) {
 					return;
 				}
-
-				const buffer: Buffer = Buffer.concat(this._bufferBuilder);
-				const decomp: string = this.decompressData(response, buffer);
-				success(decomp);
-			});
-
-			response.on('data', (data: unknown) => {
 				if (data instanceof Buffer) {
 					this._bufferBuilder.push(data);
 				}
 				else {
-					this._hasError = true;
-					error(new Error('Response is not a buffer.'))
+					fail(new Error('Response is not a buffer.'));
 				}
+			});
+
+			response.on('end', () => {
+				if (this._hasError) {
+					return;
+				}
+				ended = true;
+				const buffer: Buffer = Buffer.concat(this._bufferBuilder);
+				try {
+					success(this.decompressData(response, buffer));
+				}
+				catch (reason: unknown) {
+					fail(reason instanceof Error ? reason : new Error(String(reason)));
+				}
+			});
+
+			response.on('close', () => {
+				if (this._hasError || ended) {
+					return;
+				}
+				fail(new Error('Response closed before completion.'));
+			});
+
+			response.on('error', (reason: Error) => {
+				if (this._hasError) {
+					return;
+				}
+				fail(reason);
 			});
 		});
 	}
@@ -61,7 +87,7 @@ export default class HttpResponseReader {
 			return decompressed;
 		}
 
-		return this.decompressBuffer(buffer, compressions);
+		return this.decompressBuffer(decompressed, compressions);
 	}
 
 	private descompressBufferOnce(buffer: Buffer, compression: string | undefined): Buffer {

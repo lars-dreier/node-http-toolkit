@@ -1,4 +1,5 @@
 import type * as http from 'node:http';
+import type { PassThrough } from 'node:stream';
 
 /**
  * Shared builders and fixtures for the test suite.
@@ -13,5 +14,16 @@ export default class TestHelper {
 		headers: http.IncomingHttpHeaders = {},
 	): http.IncomingMessage {
 		return { statusCode, headers } as unknown as http.IncomingMessage;
+	}
+
+	/**
+	 * Adorns a writable stream with response headers so it can stand in for a
+	 * streamed IncomingMessage. Drive the body through the same PassThrough.
+	 */
+	public static streamResponse(
+		body: PassThrough,
+		headers: http.IncomingHttpHeaders = {},
+	): http.IncomingMessage {
+		return Object.assign(body, { headers }) as unknown as http.IncomingMessage;
 	}
 }
