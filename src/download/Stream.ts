@@ -6,7 +6,6 @@ import type IHttpDownload from './IHttpDownload.ts';
  * skip and completion state.
  */
 export default class Stream {
-
 	public get isPaused(): boolean {
 		return this.resumeAt > 0;
 	}
@@ -41,7 +40,7 @@ export default class Stream {
 		public readonly download: IHttpDownload,
 		public readonly index: number,
 		public readonly start: number,
-		public readonly end: number
+		public readonly end: number,
 	) {
 		this._size = end - start + 1;
 	}

@@ -1,13 +1,13 @@
 import type * as http from 'http';
-import FileSystem from '../support/FileSystem.ts';
-import AsyncResolvingHttpRequest from '../request/AsyncResolvingHttpRequest.ts';
-import HttpDownload from './HttpDownload.ts';
 import HttpError from '../http/HttpError.ts';
 import HttpHeaderUtil from '../http/HttpHeaderUtil.ts';
 import { HttpMethod } from '../http/HttpMethod.ts';
+import AsyncResolvingHttpRequest from '../request/AsyncResolvingHttpRequest.ts';
+import HttpResponseSize from '../response/HttpResponseSize.ts';
+import FileSystem from '../support/FileSystem.ts';
+import HttpDownload from './HttpDownload.ts';
 import type IHttpDownload from './IHttpDownload.ts';
 import Stream from './Stream.ts';
-import HttpResponseSize from '../response/HttpResponseSize.ts';
 
 /**
  * Downloads a single file in parallel by splitting it into byte-range segments,
@@ -18,7 +18,6 @@ import HttpResponseSize from '../response/HttpResponseSize.ts';
  * support.
  */
 export default class MultiStreamHttpDownload implements IHttpDownload {
-
 	public get streams(): Stream[] {
 		return this._streams;
 	}
@@ -125,7 +124,8 @@ export default class MultiStreamHttpDownload implements IHttpDownload {
 
 	public constructor(
 		url: string,
-		destinationPath: string) {
+		destinationPath: string,
+	) {
 		this._url = url;
 		this._destinationPath = destinationPath;
 	}
@@ -202,7 +202,6 @@ export default class MultiStreamHttpDownload implements IHttpDownload {
 			return;
 		}
 
-
 		if (!resume || !FileSystem.exists(this._destinationPath)) {
 			FileSystem.createFile(this._destinationPath);
 		}
@@ -269,7 +268,7 @@ export default class MultiStreamHttpDownload implements IHttpDownload {
 		HttpHeaderUtil.setHeader(headers, 'Range', `bytes=${start}-${end}`);
 		const download = new HttpDownload(
 			this._url,
-			chunkPath,
+			chunkPath
 		);
 		const stream = new Stream(download, index, start, end);
 		stream.isResuming = this._isResuming;
@@ -277,9 +276,12 @@ export default class MultiStreamHttpDownload implements IHttpDownload {
 		download.setHeaders(headers);
 		download.timeout = this._timeout;
 		download.onStart = () => this.onDownloadStreamStart(stream);
-		download.onProgress = (downloadStream: IHttpDownload, chunkSize: number) => this.onDownloadStreamProgress(downloadStream, chunkSize);
+		download.onProgress = (downloadStream: IHttpDownload, chunkSize: number) =>
+			this.onDownloadStreamProgress(downloadStream, chunkSize);
 		download.onError = (_download: IHttpDownload, error: Error) => this.onDownloadStreamError(stream, error);
-		download.onComplete = () => { void this.onDownloadStreamComplete(stream); };
+		download.onComplete = () => {
+			void this.onDownloadStreamComplete(stream);
+		};
 		return stream;
 	}
 

@@ -9,7 +9,6 @@ import { HttpStatusCode } from '../http/HttpStatusCode.ts';
  * validated against content-length.
  */
 export default class HttpResponseSize {
-
 	private static readonly CONTENT_RANGE_RESPONSE_REGEX: RegExp = /bytes (\d+)-(\d+)\/(\d+)/i;
 
 	public constructor(
@@ -42,7 +41,6 @@ export default class HttpResponseSize {
 	}
 
 	private static parsePartialContent(response: http.IncomingMessage): HttpResponseSize {
-
 		const contentLength: number = HttpResponseSize.parseContentLength(response);
 
 		const range: string | undefined = HttpHeaderUtil.getHeader(response.headers, 'content-range');

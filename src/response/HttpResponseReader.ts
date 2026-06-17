@@ -7,14 +7,11 @@ import * as zlib from 'zlib';
  * applied in sequence.
  */
 export default class HttpResponseReader {
-
 	private _bufferBuilder: Buffer[] = [];
 	private _hasError: boolean = false;
 
 	public readData(response: http.IncomingMessage): Promise<string> {
-
 		return new Promise<string>((success, error) => {
-
 			let ended: boolean = false;
 
 			const fail = (reason: Error): void => {
@@ -65,7 +62,6 @@ export default class HttpResponseReader {
 	}
 
 	private decompressData(response: http.IncomingMessage, data: Buffer): string {
-
 		const encodingHeader = response.headers['content-encoding'];
 
 		if (encodingHeader == null) {
@@ -79,7 +75,6 @@ export default class HttpResponseReader {
 	}
 
 	private decompressBuffer(buffer: Buffer, compressions: string[]): Buffer {
-
 		const compression: string | undefined = compressions.pop();
 		const decompressed: Buffer = this.descompressBufferOnce(buffer, compression);
 
@@ -91,7 +86,6 @@ export default class HttpResponseReader {
 	}
 
 	private descompressBufferOnce(buffer: Buffer, compression: string | undefined): Buffer {
-
 		if (compression == null) {
 			console.warn('No compression set.');
 			return buffer;

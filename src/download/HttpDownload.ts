@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import type * as http from 'http';
-import AsyncResolvingHttpRequest from '../request/AsyncResolvingHttpRequest.ts';
 import HttpHeaderUtil from '../http/HttpHeaderUtil.ts';
 import { HttpMethod } from '../http/HttpMethod.ts';
-import type IHttpDownload from './IHttpDownload.ts';
-import TimeoutError from '../support/TimeoutError.ts';
+import AsyncResolvingHttpRequest from '../request/AsyncResolvingHttpRequest.ts';
 import HttpResponseSize from '../response/HttpResponseSize.ts';
+import TimeoutError from '../support/TimeoutError.ts';
+import type IHttpDownload from './IHttpDownload.ts';
 
 /**
  * Downloads a single URL to a file on disk. It supports custom request headers,
@@ -14,7 +14,6 @@ import HttpResponseSize from '../response/HttpResponseSize.ts';
  * total, requested and downloaded byte counts.
  */
 export default class HttpDownload implements IHttpDownload {
-
 	public onStart?: (download: IHttpDownload) => void;
 	public onProgress?: (download: IHttpDownload, chunkSize: number) => void;
 	public onComplete?: (download: IHttpDownload) => void;
@@ -75,7 +74,8 @@ export default class HttpDownload implements IHttpDownload {
 
 	public constructor(
 		url: string,
-		destinationPath: string) {
+		destinationPath: string,
+	) {
 		this._url = url;
 		this._destinationPath = destinationPath;
 	}
@@ -170,7 +170,8 @@ export default class HttpDownload implements IHttpDownload {
 			this._totalBytes = responseSize.totalBytes;
 			this._requestedBytes = responseSize.contentLength;
 			this.handleSuccessResponse(result);
-		} catch (error) {
+		}
+		catch (error) {
 			this.handleError(error as Error);
 		}
 	}
@@ -200,8 +201,8 @@ export default class HttpDownload implements IHttpDownload {
 			);
 			file.on('close', () => this.onFileComplete());
 			response.pipe(file, { end: true });
-
-		} catch (error) {
+		}
+		catch (error) {
 			fs.unlinkSync(this._destinationPath);
 			this.handleError(error as Error);
 		}

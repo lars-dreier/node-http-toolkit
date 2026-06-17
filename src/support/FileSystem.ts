@@ -46,8 +46,7 @@ export default class FileSystem {
 
 	public static async readBytes(path: string, offset: number = 0, numBytes?: number): Promise<Buffer> {
 		const length: number = numBytes === undefined ? this.getFileSize(path) - offset : numBytes;
-		return new Promise((resolve, reject
-		) => {
+		return new Promise((resolve, reject) => {
 			fs.open(path, 'r', (err, fd) => {
 				if (err) {
 					return reject(new Error(`Failed to open file: ${err.message}`));
@@ -68,8 +67,7 @@ export default class FileSystem {
 					resolve(buffer.subarray(0, bytesRead));
 				});
 			});
-		}
-		);
+		});
 	}
 
 	public static async joinFiles(files: string[], destination: string): Promise<void> {
@@ -93,7 +91,8 @@ export default class FileSystem {
 				// Write the buffer content to the destination file
 				fs.writeSync(destFileDescriptor, buffer);
 			}
-		} finally {
+		}
+		finally {
 			// Close the destination file descriptor if it was opened
 			if (destFileDescriptor !== null) {
 				await close(destFileDescriptor);

@@ -1,5 +1,5 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import HttpResponseSize from '../../src/response/HttpResponseSize.ts';
 import TestHelper from '../TestHelper.ts';
@@ -29,7 +29,7 @@ describe('HttpResponseSize', () => {
 			// Given a 206 response with a matching range and content-length
 			const response = TestHelper.stubResponse(206, {
 				'content-length': '500',
-				'content-range': 'bytes 0-499/1234',
+				'content-range': 'bytes 0-499/1234'
 			});
 			// When parsed
 			const size: HttpResponseSize = HttpResponseSize.parse(response);
@@ -52,7 +52,7 @@ describe('HttpResponseSize', () => {
 			// Then it rejects — a partial response must carry a range
 			assert.throws(
 				() => HttpResponseSize.parse(response),
-				/Partial content without range header\./,
+				/Partial content without range header\./
 			);
 		});
 
@@ -60,7 +60,7 @@ describe('HttpResponseSize', () => {
 			// Given a 206 response with an unparseable content-range
 			const response = TestHelper.stubResponse(206, {
 				'content-length': '500',
-				'content-range': 'pages 0-499/1234',
+				'content-range': 'pages 0-499/1234'
 			});
 			// When parsed
 			// Then the range regex fails to match
@@ -71,7 +71,7 @@ describe('HttpResponseSize', () => {
 			// Given a range spanning 500 bytes but a content-length of 400
 			const response = TestHelper.stubResponse(206, {
 				'content-length': '400',
-				'content-range': 'bytes 0-499/1234',
+				'content-range': 'bytes 0-499/1234'
 			});
 			// When parsed
 			// Then the consistency check rejects the mismatch

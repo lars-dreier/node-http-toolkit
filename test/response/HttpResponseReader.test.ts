@@ -1,8 +1,8 @@
-import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { PassThrough } from 'node:stream';
-import * as zlib from 'node:zlib';
 import type * as http from 'node:http';
+import { PassThrough } from 'node:stream';
+import { beforeEach, describe, it } from 'node:test';
+import * as zlib from 'node:zlib';
 
 import HttpResponseReader from '../../src/response/HttpResponseReader.ts';
 import TestHelper from '../TestHelper.ts';
@@ -29,7 +29,7 @@ describe('HttpResponseReader', () => {
 	it('decodes a gzip-encoded body', async () => {
 		// Given a gzip-compressed body
 		const response: http.IncomingMessage = TestHelper.streamResponse(body, {
-			'content-encoding': 'gzip',
+			'content-encoding': 'gzip'
 		});
 		// When read
 		const promise: Promise<string> = reader.readData(response);
@@ -41,7 +41,7 @@ describe('HttpResponseReader', () => {
 	it('decodes a deflate-encoded body', async () => {
 		// Given a deflate-compressed body
 		const response: http.IncomingMessage = TestHelper.streamResponse(body, {
-			'content-encoding': 'deflate',
+			'content-encoding': 'deflate'
 		});
 		// When read
 		const promise: Promise<string> = reader.readData(response);
@@ -53,7 +53,7 @@ describe('HttpResponseReader', () => {
 	it('decodes a br-encoded body', async () => {
 		// Given a brotli-compressed body
 		const response: http.IncomingMessage = TestHelper.streamResponse(body, {
-			'content-encoding': 'br',
+			'content-encoding': 'br'
 		});
 		// When read
 		const promise: Promise<string> = reader.readData(response);
@@ -65,7 +65,7 @@ describe('HttpResponseReader', () => {
 	it('decodes a chained "gzip, br" body [#1]', async () => {
 		// Given a body encoded gzip-then-br (br is the outermost layer)
 		const response: http.IncomingMessage = TestHelper.streamResponse(body, {
-			'content-encoding': 'gzip, br',
+			'content-encoding': 'gzip, br'
 		});
 		// When read
 		const promise: Promise<string> = reader.readData(response);
@@ -77,7 +77,7 @@ describe('HttpResponseReader', () => {
 	it('rejects an unknown content-encoding', async () => {
 		// Given an encoding the decoder does not support
 		const response: http.IncomingMessage = TestHelper.streamResponse(body, {
-			'content-encoding': 'snappy',
+			'content-encoding': 'snappy'
 		});
 		// When read
 		const promise: Promise<string> = reader.readData(response);

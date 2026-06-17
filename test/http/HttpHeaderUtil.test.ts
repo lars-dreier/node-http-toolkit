@@ -1,6 +1,6 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type * as http from 'node:http';
+import { describe, it } from 'node:test';
 
 import HttpHeaderUtil from '../../src/http/HttpHeaderUtil.ts';
 
@@ -25,7 +25,7 @@ describe('HttpHeaderUtil', () => {
 			// Given both an exact and a lower-cased entry
 			const headers: http.OutgoingHttpHeaders = {
 				'Content-Type': 'exact',
-				'content-type': 'lower',
+				'content-type': 'lower'
 			};
 			// When/Then the exact match wins via the `??` precedence
 			assert.equal(HttpHeaderUtil.getHeader(headers, 'Content-Type'), 'exact');

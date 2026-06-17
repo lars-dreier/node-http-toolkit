@@ -8,7 +8,6 @@ import type IHttpDownloadProgress from './IHttpDownloadProgress.ts';
  * download ends.
  */
 export default class HttpDownloadProgress implements IHttpDownloadProgress {
-
 	public onProgress?: (current: number, total: number) => void;
 
 	public get bytesPerSecond(): number {
@@ -67,7 +66,7 @@ export default class HttpDownloadProgress implements IHttpDownloadProgress {
 		const now: number = Date.now();
 		const elapsed: number = now - this._lastDownloadedTime;
 		if (elapsed >= 1000) {
-			this._bytesPerSecond = (current - this._lastDownloadedBytes) / ((elapsed) / 1000);
+			this._bytesPerSecond = (current - this._lastDownloadedBytes) / (elapsed / 1000);
 			this._lastDownloadedBytes = current;
 			this._lastDownloadedTime = now;
 		}

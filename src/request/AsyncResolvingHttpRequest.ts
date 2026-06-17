@@ -7,7 +7,6 @@ import ResolvingHttpRequest from './ResolvingHttpRequest.ts';
  * while exposing the resolved total and requested byte counts.
  */
 export default class AsyncResolvingHttpRequest {
-
 	public maxRedirects?: number;
 
 	public get totalBytes(): number {
@@ -24,7 +23,7 @@ export default class AsyncResolvingHttpRequest {
 		private readonly _url: string,
 		private readonly _method: string,
 		private readonly _headers?: http.OutgoingHttpHeaders,
-		private readonly _postData?: string
+		private readonly _postData?: string,
 	) {
 	}
 

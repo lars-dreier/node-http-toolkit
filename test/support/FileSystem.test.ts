@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import FileSystem from '../../src/support/FileSystem.ts';
 
@@ -175,7 +175,7 @@ describe('FileSystem', () => {
 			// Then it rejects, naming the missing file (and the finally closes the fd)
 			await assert.rejects(
 				FileSystem.joinFiles([a, missing], destination),
-				/File not found: .*nope/,
+				/File not found: .*nope/
 			);
 		});
 	});

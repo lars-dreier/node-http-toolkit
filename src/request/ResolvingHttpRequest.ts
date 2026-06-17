@@ -1,8 +1,8 @@
 import type * as http from 'http';
 import HttpError from '../http/HttpError.ts';
 import { HttpMethod } from '../http/HttpMethod.ts';
-import HttpRequest from './HttpRequest.ts';
 import { HttpStatusCode } from '../http/HttpStatusCode.ts';
+import HttpRequest from './HttpRequest.ts';
 
 /**
  * Drives an HttpRequest through to a usable response. It follows redirects up to
@@ -12,7 +12,6 @@ import { HttpStatusCode } from '../http/HttpStatusCode.ts';
  * through the onResolve and onError callbacks.
  */
 export default class ResolvingHttpRequest {
-
 	public maxRedirects: number = 10;
 
 	public onResolve?: (response: http.IncomingMessage) => void;
@@ -36,7 +35,7 @@ export default class ResolvingHttpRequest {
 		private readonly _url: string,
 		private readonly _method: string,
 		private readonly _headers?: http.OutgoingHttpHeaders,
-		private readonly _postData?: string
+		private readonly _postData?: string,
 	) {
 	}
 
@@ -49,13 +48,18 @@ export default class ResolvingHttpRequest {
 		);
 	}
 
-	private async sendRequest(url: string, method: string, headers: http.OutgoingHttpHeaders = {}, postData?: string): Promise<void> {
+	private async sendRequest(
+		url: string,
+		method: string,
+		headers: http.OutgoingHttpHeaders = {},
+		postData?: string,
+	): Promise<void> {
 		try {
 			const request = new HttpRequest(url, method, headers, postData);
 			const result: http.IncomingMessage = await request.send();
 			this.onResponse(result);
-
-		} catch (error) {
+		}
+		catch (error) {
 			this.handleError(error as Error);
 		}
 	}
@@ -109,8 +113,9 @@ export default class ResolvingHttpRequest {
 				if (statusCode >= HttpStatusCode.BAD_REQUEST) {
 					this.handleErrorResponse(response);
 				}
-				if (statusCode >= HttpStatusCode.MULTIPLE_CHOICES ||
-					statusCode < HttpStatusCode.OK
+				if (
+					statusCode >= HttpStatusCode.MULTIPLE_CHOICES
+					|| statusCode < HttpStatusCode.OK
 				) {
 					this.onError?.(new Error(`Unhandled status code: ${statusCode}`));
 				}
@@ -143,9 +148,9 @@ export default class ResolvingHttpRequest {
 
 	private handleErrorResponse(response: http.IncomingMessage): void {
 		response.destroy();
-		const error: Error = response.statusCode == null ?
-			new Error('Response without status code.') :
-			new HttpError(response.statusCode, response.statusMessage ?? '');
+		const error: Error = response.statusCode == null
+			? new Error('Response without status code.')
+			: new HttpError(response.statusCode, response.statusMessage ?? '');
 		this.handleError(error);
 	}
 

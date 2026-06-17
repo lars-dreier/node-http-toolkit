@@ -10,7 +10,6 @@ import { HttpProtocol } from '../http/HttpProtocol.ts';
  * control over the request line and header block.
  */
 export default class HttpRequest {
-
 	public constructor(
 		private readonly _url: string,
 		private readonly _method: string,
@@ -54,7 +53,7 @@ export default class HttpRequest {
 		url: URL,
 		method: string,
 		headers: http.OutgoingHttpHeaders | undefined,
-		onSuccess: (response: http.IncomingMessage) => void
+		onSuccess: (response: http.IncomingMessage) => void,
 	): http.ClientRequest {
 		const options: http.RequestOptions = this.createOptions(
 			url,
@@ -73,14 +72,14 @@ export default class HttpRequest {
 			hostname: url.hostname,
 			path: url.pathname + url.search,
 			method: method,
-			headers: headers,
+			headers: headers
 		};
 	}
 
 	private createGetRequest(
 		url: URL,
 		options: http.RequestOptions,
-		onSuccess: (response: http.IncomingMessage) => void
+		onSuccess: (response: http.IncomingMessage) => void,
 	): http.ClientRequest {
 		const protocol: string = url.protocol;
 		if (protocol == HttpProtocol.Https) {
@@ -101,7 +100,7 @@ export default class HttpRequest {
 	private createGenericRequest(
 		url: URL,
 		options: http.RequestOptions,
-		onSuccess: (response: http.IncomingMessage) => void
+		onSuccess: (response: http.IncomingMessage) => void,
 	): http.ClientRequest {
 		const protocol: string = url.protocol;
 		if (protocol == HttpProtocol.Https) {

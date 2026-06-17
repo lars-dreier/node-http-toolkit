@@ -5,8 +5,10 @@ import type * as http from 'http';
  * and normalize header keys.
  */
 export default class HttpHeaderUtil {
-
-	public static getHeader(headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders, key: string): string | undefined {
+	public static getHeader(
+		headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders,
+		key: string,
+	): string | undefined {
 		return (headers[key] ?? headers[key.toLowerCase()]) as string | undefined;
 	}
 
@@ -15,7 +17,11 @@ export default class HttpHeaderUtil {
 		delete headers[key.toLowerCase()];
 	}
 
-	public static setHeader(headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders, key: string, value: string): void {
+	public static setHeader(
+		headers: http.IncomingHttpHeaders | http.OutgoingHttpHeaders,
+		key: string,
+		value: string,
+	): void {
 		HttpHeaderUtil.removeHeader(headers, key);
 		headers[key] = value;
 	}
