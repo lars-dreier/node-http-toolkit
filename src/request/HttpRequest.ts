@@ -39,8 +39,10 @@ export default class HttpRequest {
 				onError(error);
 			});
 
-			if (this._method == HttpMethod.POST) {
-				request.write(this._postData);
+			if (this._method != HttpMethod.GET) {
+				if (this._postData != null) {
+					request.write(this._postData);
+				}
 				request.end();
 			}
 		}
@@ -70,6 +72,7 @@ export default class HttpRequest {
 	private createOptions(url: URL, method: string, headers: http.OutgoingHttpHeaders | undefined): http.RequestOptions {
 		return {
 			hostname: url.hostname,
+			port: url.port,
 			path: url.pathname + url.search,
 			method: method,
 			headers: headers
