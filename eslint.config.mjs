@@ -62,6 +62,26 @@ export default tseslint.config(
 		},
 	},
 
+	// Test tree: not part of the build tsconfig (rootDir: ./src). Resolve its type
+	// information from the dedicated tsconfig.test.json instead of the project
+	// service so type-aware rules (e.g. no-floating-promises) still apply.
+	{
+		files: ['test/**/*.ts'],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: './tsconfig.test.json',
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+		rules: {
+			// node:test's describe/it return a Promise that must NOT be awaited at
+			// the call site; the rule would flag every block as a false positive.
+			// Stays strict in src/, where unawaited promises are real defects.
+			'@typescript-eslint/no-floating-promises': 'off',
+		},
+	},
+
 	// Plain JS / config files are not part of the TS program: disable type-aware
 	// rules for them so ESLint does not try to load type information it lacks.
 	{
