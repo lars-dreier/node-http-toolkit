@@ -30,6 +30,7 @@ export default class ResolvingHttpRequest {
 	private _totalBytes: number = 0;
 	private _requestedBytes: number = 0;
 	private _redirects: number = 0;
+	private _currentUrl: string = '';
 
 	public constructor(
 		private readonly _url: string,
@@ -54,6 +55,7 @@ export default class ResolvingHttpRequest {
 		headers: http.OutgoingHttpHeaders = {},
 		postData?: string,
 	): Promise<void> {
+		this._currentUrl = url;
 		try {
 			const request = new HttpRequest(url, method, headers, postData);
 			const result: http.IncomingMessage = await request.send();
@@ -98,8 +100,9 @@ export default class ResolvingHttpRequest {
 			}
 			case HttpStatusCode.MOVED_PERMANENTLY:
 			case HttpStatusCode.FOUND:
+			case HttpStatusCode.SEE_OTHER:
 				this.handleRedirectResponse(response, HttpMethod.GET);
-			// falls through
+				break;
 			case HttpStatusCode.TEMPORARY_REDIRECT:
 			case HttpStatusCode.PERMANENT_REDIRECT:
 				this.handleRedirectResponse(response, this._method);
@@ -113,11 +116,11 @@ export default class ResolvingHttpRequest {
 				if (statusCode >= HttpStatusCode.BAD_REQUEST) {
 					this.handleErrorResponse(response);
 				}
-				if (
+				else if (
 					statusCode >= HttpStatusCode.MULTIPLE_CHOICES
 					|| statusCode < HttpStatusCode.OK
 				) {
-					this.onError?.(new Error(`Unhandled status code: ${statusCode}`));
+					this.handleError(new Error(`Unhandled status code: ${statusCode}`));
 				}
 				else {
 					this.handleSuccessResponse(response);
@@ -142,7 +145,8 @@ export default class ResolvingHttpRequest {
 			this.handleError(new Error('Missing Location header on redirect.'));
 		}
 		else {
-			void this.sendRequest(location, method, this._headers, this._postData);
+			const resolvedLocation: string = new URL(location, this._currentUrl).toString();
+			void this.sendRequest(resolvedLocation, method, this._headers, this._postData);
 		}
 	}
 

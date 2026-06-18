@@ -14,7 +14,7 @@ export default class TestHelper {
 		statusCode: number | undefined,
 		headers: http.IncomingHttpHeaders = {},
 	): http.IncomingMessage {
-		return { statusCode, headers } as unknown as http.IncomingMessage;
+		return { statusCode, headers, destroy: () => {} } as unknown as http.IncomingMessage;
 	}
 
 	/**
