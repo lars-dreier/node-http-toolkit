@@ -15,12 +15,13 @@ describe('HttpResponseSize', () => {
 			assert.deepEqual(size, new HttpResponseSize(1000, 1000, 0, 999));
 		});
 
-		it('throws when content-length is missing', () => {
+		it('reports an unknown (0) size when content-length is missing', () => {
 			// Given a 200 response without content-length (e.g. chunked transfer)
 			const response = TestHelper.stubResponse(200, {});
 			// When parsed
-			// Then it rejects — the size cannot be determined
-			assert.throws(() => HttpResponseSize.parse(response), /Missing content length header\./);
+			const size: HttpResponseSize = HttpResponseSize.parse(response);
+			// Then the size is treated as unknown rather than rejected
+			assert.deepEqual(size, new HttpResponseSize(0, 0, 0, -1));
 		});
 	});
 

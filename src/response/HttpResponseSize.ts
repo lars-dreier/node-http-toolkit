@@ -4,9 +4,10 @@ import { HttpStatusCode } from '../http/HttpStatusCode.ts';
 
 /**
  * Derives a response's size from its status code and headers. For full (200)
- * responses the length comes from content-length; for partial (206) responses
- * content-range is parsed into start, end and total, with the parsed length
- * validated against content-length.
+ * responses the length comes from content-length when present, falling back to 0
+ * (unknown) when it is absent, as with chunked transfer encoding; for partial
+ * (206) responses content-range is parsed into start, end and total, with the
+ * parsed length validated against the required content-length.
  */
 export default class HttpResponseSize {
 	private static readonly CONTENT_RANGE_RESPONSE_REGEX: RegExp = /bytes (\d+)-(\d+)\/(\d+)/i;
@@ -31,7 +32,7 @@ export default class HttpResponseSize {
 	}
 
 	private static parseCompleteContent(response: http.IncomingMessage): HttpResponseSize {
-		const contentLength: number = HttpResponseSize.parseContentLength(response);
+		const contentLength: number = HttpResponseSize.parseOptionalContentLength(response);
 		return new HttpResponseSize(
 			contentLength,
 			contentLength,
@@ -72,6 +73,19 @@ export default class HttpResponseSize {
 		const contentLength: string | undefined = HttpHeaderUtil.getHeader(response.headers, 'content-length');
 		if (contentLength == null) {
 			throw new Error('Missing content length header.');
+		}
+		return parseInt(contentLength, 10);
+	}
+
+	/**
+	 * Reads content-length when present, returning 0 when it is absent. A 200
+	 * response may legitimately omit it (e.g. Transfer-Encoding: chunked), in
+	 * which case the body length is simply not known up front.
+	 */
+	private static parseOptionalContentLength(response: http.IncomingMessage): number {
+		const contentLength: string | undefined = HttpHeaderUtil.getHeader(response.headers, 'content-length');
+		if (contentLength == null) {
+			return 0;
 		}
 		return parseInt(contentLength, 10);
 	}
