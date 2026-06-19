@@ -1,6 +1,6 @@
 {
 	"name": "node-http-toolkit",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Zero-dependency HTTP client toolkit for Node.js: requests with full header control, resumable and parallel file downloads, and automatic response decoding.",
 	"type": "module",
 	"types": "./dist/index.d.mts",
