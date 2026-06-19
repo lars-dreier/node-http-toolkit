@@ -1,7 +1,7 @@
 {
 	"name": "node-http-toolkit",
 	"version": "1.0.0",
-	"description": "A small HTTP client toolkit for Node.js: file downloads, HTTP requests, and response decoding.",
+	"description": "Zero-dependency HTTP client toolkit for Node.js: requests with full header control, resumable and parallel file downloads, and automatic response decoding.",
 	"type": "module",
 	"types": "./dist/index.d.mts",
 	"main": "./dist/index.cjs",
@@ -45,8 +45,22 @@
 		"client",
 		"node"
 	],
-	"author": "ldreier@posteo.de",
+	"author": {
+		"name": "Lars Dreier",
+		"email": "ldreier@posteo.de"
+	},
 	"license": "ISC",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lars-dreier/node-http-toolkit.git"
+	},
+	"bugs": {
+		"url": "https://github.com/lars-dreier/node-http-toolkit/issues"
+	},
+	"homepage": "https://github.com/lars-dreier/node-http-toolkit#readme",
+	"engines": {
+		"node": ">=18"
+	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "0.18.3",
 		"@eslint/js": "10.0.1",
