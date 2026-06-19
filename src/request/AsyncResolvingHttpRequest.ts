@@ -36,6 +36,9 @@ export default class AsyncResolvingHttpRequest {
 					this._headers,
 					this._postData
 				);
+				if (this.maxRedirects !== undefined) {
+					this._request.maxRedirects = this.maxRedirects;
+				}
 				this._request.onResolve = (response: http.IncomingMessage) => resolve(response);
 				this._request.onError = (error: Error) => reject(error);
 				this._request.resolve();
