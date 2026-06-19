@@ -5,7 +5,7 @@ export default defineConfig({
 	format: ['esm', 'cjs'],
 	unbundle: true,
 	dts: true,
-	sourcemap: true,
+	sourcemap: false,
 	clean: true,
 	target: 'node18',
 	outDir: 'dist'
