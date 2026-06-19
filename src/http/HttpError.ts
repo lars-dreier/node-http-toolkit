@@ -8,5 +8,6 @@ export default class HttpError extends Error {
 		public readonly statusMessage: string,
 	) {
 		super(`HTTP Error ${statusCode}: ${statusMessage}`);
+		this.name = 'HttpError';
 	}
 }
