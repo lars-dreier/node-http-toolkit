@@ -27,7 +27,7 @@
 		"build": "tsdown",
 		"typecheck": "tsc --noEmit",
 		"check:exports": "attw --pack .",
-		"prepublishOnly": "npm run typecheck && npm run build && npm run check:exports",
+		"prepublishOnly": "npm test && npm run typecheck && npm run build && npm run check:exports",
 		"dev": "tsdown --watch",
 		"test": "tsx --test \"test/**/*.test.ts\"",
 		"test:coverage": "tsx --test --experimental-test-coverage \"test/**/*.test.ts\"",
