@@ -70,12 +70,10 @@ export default class ResolvingHttpRequest {
 		switch (response.statusCode) {
 			case HttpStatusCode.OK: {
 				const contentLength: string | undefined = response.headers['content-length'];
-				if (contentLength == null) {
-					this.handleError(new Error('Missing content length header.'));
-					break;
+				if (contentLength != null) {
+					this._totalBytes = parseInt(contentLength, 10);
+					this._requestedBytes = this._totalBytes;
 				}
-				this._totalBytes = parseInt(contentLength, 10);
-				this._requestedBytes = this._totalBytes;
 				this.handleSuccessResponse(response);
 				break;
 			}

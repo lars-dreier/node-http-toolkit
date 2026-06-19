@@ -49,10 +49,14 @@ describe('ResolvingHttpRequest', () => {
 			assert.equal(errors.length, 0);
 		});
 
-		it('errors a 200 with no content-length', () => {
+		it('resolves a 200 with no content-length and reports zero total bytes', () => {
+			// Given a 200 response that omits content-length (e.g. chunked transfer encoding)
 			dispatch(request, TestHelper.stubResponse(200, {}));
-			assert.equal(resolved, undefined);
-			assert.match(errors[0]!.message, /Missing content length header\./);
+			// Then it still resolves, with the byte counters left at their unknown (0) default
+			assert.equal(resolved?.statusCode, 200);
+			assert.equal(request.totalBytes, 0);
+			assert.equal(request.requestedBytes, 0);
+			assert.equal(errors.length, 0);
 		});
 
 		it('resolves a 206 and parses content-range', () => {
@@ -248,6 +252,25 @@ describe('ResolvingHttpRequest', () => {
 			const request = new ResolvingHttpRequest(`${started.url}/start`, HttpMethod.GET);
 
 			await assert.rejects(run(request), /Missing Location header on redirect\./);
+		});
+
+		it('resolves a chunked 200 that omits content-length', async () => {
+			// Given a server that replies 200 with a chunked body and no content-length
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(200, { 'content-type': 'text/plain' });
+				res.write('hello ');
+				res.end('world');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const request = new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET);
+			const response: http.IncomingMessage = await run(request);
+
+			// Then it resolves successfully, delivers the body, and reports an unknown (0) total size
+			assert.equal(response.statusCode, 200);
+			assert.equal(await TestHelper.readBody(response), 'hello world');
+			assert.equal(request.totalBytes, 0);
 		});
 	});
 });
