@@ -1,7 +1,7 @@
 {
 	"name": "node-http-toolkit",
 	"version": "1.0.1",
-	"description": "HTTP requests and file downloads for Node.js: resumable and parallel segmented downloads with progress metering and redirect handling. Built on Node's http/https/zlib, no runtime dependencies.",
+	"description": "File downloads for Node.js with resume and parallel byte-range segmentation, plus HTTP requests with redirect handling and response decompression. Built on Node's http/https/zlib, no runtime dependencies.",
 	"type": "module",
 	"types": "./dist/index.d.mts",
 	"main": "./dist/index.cjs",
