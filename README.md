@@ -1,23 +1,20 @@
 # node-http-toolkit
 
-Zero-dependency HTTP client toolkit for Node.js: requests with full header
-control, resumable and parallel file downloads, and automatic response
-decoding. Built entirely on Node's built-in `http`/`https`/`zlib` modules.
+HTTP requests and file downloads for Node.js, built on the built-in
+`http`/`https`/`zlib` modules.
 
-- **Zero runtime dependencies** — nothing but Node built-ins, so no transitive
-  supply-chain surface and a minimal install footprint.
-- **Full control over request headers** — set any header freely, individually or
-  in bulk; insertion order is preserved and nothing is added behind your back.
-- **HTTP requests** — issue a request, follow redirects, and interpret status
-  codes and byte-range metadata.
 - **File downloads** — download a URL to disk, resume a partial download via an
-  HTTP `Range` request, or download a single file in parallel byte-range
-  segments.
-- **Response decoding** — buffer a response body and automatically decompress
-  `br`, `gzip`, and `deflate` (including chained) content-encodings.
+  HTTP `Range` request, or split one file into byte-range segments and fetch them
+  in parallel with a concurrency cap and per-segment retry.
+- **Throughput metering** — wrap any download to report bytes per second and
+  total progress.
+- **HTTP requests** — issue a request, follow redirects, and reject on HTTP error
+  responses.
+- **Response decoding** — buffer a response body and decompress `br`, `gzip`, and
+  `deflate` content-encodings, including chained ones.
 
-
-Ships as a dual ESM/CJS package with TypeScript types.
+Ships as a dual ESM/CJS package with TypeScript types, and uses only Node
+built-ins — no runtime dependencies.
 
 ## Requirements
 
@@ -56,10 +53,10 @@ const body = await new HttpResponseReader().readData(response);
 console.log(body);
 ```
 
-### Set request headers freely
+### Set request headers
 
-Requests take a headers object as the third constructor argument — set anything
-you like, including auth and custom headers. Insertion order is preserved.
+Requests take a headers object as the third constructor argument. Headers are
+sent in the order given, and the library adds none of its own.
 
 ```ts
 import { AsyncResolvingHttpRequest } from "node-http-toolkit";

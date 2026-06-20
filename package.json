@@ -1,7 +1,7 @@
 {
 	"name": "node-http-toolkit",
 	"version": "1.0.1",
-	"description": "Zero-dependency HTTP client toolkit for Node.js: requests with full header control, resumable and parallel file downloads, and automatic response decoding.",
+	"description": "HTTP requests and file downloads for Node.js: resumable and parallel segmented downloads with progress metering and redirect handling. Built on Node's http/https/zlib, no runtime dependencies.",
 	"type": "module",
 	"types": "./dist/index.d.mts",
 	"main": "./dist/index.cjs",
