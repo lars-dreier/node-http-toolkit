@@ -48,8 +48,8 @@ download.onError = (_d, error) => console.error(error);
 download.start();
 ```
 
-`resume()` continues an interrupted download instead of restarting it, sending a
-`Range` header computed from the bytes already on disk:
+`resume()` continues an interrupted download, sending a `Range` header computed
+from the bytes already on disk:
 
 ```ts
 download.resume();
