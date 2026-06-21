@@ -116,8 +116,8 @@ Exported from the package barrel:
 
 - **Downloads** — `HttpDownload`, `MultiStreamHttpDownload`, `HttpDownloadProgress`,
   `Stream`, and the type-only `IHttpDownload` / `IHttpDownloadProgress` contracts.
-- **Requests** — `AsyncResolvingHttpRequest` (Promise-based; the usual entry
-  point), `ResolvingHttpRequest` (callback-based), `HttpRequest` (raw, no status
+- **Requests** — `AsyncResolvingHttpRequest` (Promise-based),
+  `ResolvingHttpRequest` (callback-based), `HttpRequest` (raw, no status
   handling).
 - **Responses** — `HttpResponseReader` (buffer + decompress), `HttpResponseSize`
   (parse `content-length` / `content-range`).
