@@ -107,8 +107,7 @@ const response = await request.resolve();
 const body = await new HttpResponseReader().readData(response);
 ```
 
-Headers passed to the constructor are sent in the order given; no headers are
-added automatically.
+Only the headers you pass are sent, in the order given.
 
 ## API
 
