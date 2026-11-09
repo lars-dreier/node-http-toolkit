@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type * as http from 'node:http';
-import { afterEach, beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import HttpError from '../../src/http/HttpError.ts';
 import { HttpMethod } from '../../src/http/HttpMethod.ts';
@@ -253,6 +253,37 @@ describe('ResolvingHttpRequest', () => {
 			await assert.rejects(run(request), /Missing Location header on redirect\./);
 		});
 
+		it('destroys a followed redirect response instead of leaving its connection open', async () => {
+			// Given a redirect whose body never finishes
+			let startResponse: http.ServerResponse | undefined;
+			let closedBeforeEnd: boolean = false;
+			const started = await TestHelper.startLoopbackServer((req, res) => {
+				if (req.url === '/start') {
+					startResponse = res;
+					res.on('close', () => {
+						closedBeforeEnd = !res.writableEnded;
+					});
+					res.writeHead(301, { location: `http://${req.headers.host}/target` });
+					res.write('partial');
+				}
+				else {
+					res.writeHead(200, { 'content-length': '2' });
+					res.end('ok');
+				}
+			});
+			server = started.server;
+
+			// When the redirect is followed
+			const request = new ResolvingHttpRequest(`${started.url}/start`, HttpMethod.GET);
+			const response: http.IncomingMessage = await run(request);
+			response.destroy();
+			await delay(50);
+			startResponse?.end();
+
+			// Then the client closed the redirect's connection without waiting for its body
+			assert.equal(closedBeforeEnd, true);
+		});
+
 		it('resolves a chunked 200 that omits content-length', async () => {
 			// Given a server that replies 200 with a chunked body and no content-length
 			const started = await TestHelper.startLoopbackServer((_req, res) => {
@@ -358,6 +389,66 @@ describe('ResolvingHttpRequest', () => {
 				assert.equal(error.body?.length, 64 * 1024);
 				return true;
 			});
+		});
+	});
+
+	describe('response cleanup on failure', () => {
+		const scenarios: {
+			name: string;
+			statusCode: number | undefined;
+			headers: http.IncomingHttpHeaders;
+			message: RegExp;
+		}[] = [
+			{
+				name: 'a 206 with no range header',
+				statusCode: 206,
+				headers: {},
+				message: /Partial content without range header\./
+			},
+			{
+				name: 'a 206 with an invalid range header',
+				statusCode: 206,
+				headers: { 'content-range': 'pages 0-499/1234' },
+				message: /Invalid range header\./
+			},
+			{ name: 'an unhandled status (305)', statusCode: 305, headers: {}, message: /Unhandled status code: 305/ },
+			{ name: 'a missing status code', statusCode: undefined, headers: {}, message: /Response without status code\./ },
+			{ name: 'a redirect without a Location header', statusCode: 301, headers: {}, message: /Missing Location header/ }
+		];
+
+		for (const scenario of scenarios) {
+			it(`destroys the response for ${scenario.name}`, () => {
+				// Given a response this request cannot use
+				const request = new ResolvingHttpRequest('http://127.0.0.1/', HttpMethod.GET);
+				const errors: Error[] = [];
+				request.onError = (error) => errors.push(error);
+				const response: http.IncomingMessage = TestHelper.stubResponse(scenario.statusCode, scenario.headers);
+				const destroy = mock.method(response, 'destroy');
+
+				// When it is dispatched
+				dispatch(request, response);
+
+				// Then the error is reported and the response is released once
+				assert.match(errors[0]!.message, scenario.message);
+				assert.equal(destroy.mock.callCount(), 1);
+			});
+		}
+
+		it('destroys the response when the redirect limit is exceeded', () => {
+			// Given a request that allows no redirects
+			const request = new ResolvingHttpRequest('http://127.0.0.1/', HttpMethod.GET);
+			request.maxRedirects = 0;
+			const errors: Error[] = [];
+			request.onError = (error) => errors.push(error);
+			const response: http.IncomingMessage = TestHelper.stubResponse(302, { location: '/next' });
+			const destroy = mock.method(response, 'destroy');
+
+			// When a redirect is dispatched
+			dispatch(request, response);
+
+			// Then the error is reported and the response is released once
+			assert.match(errors[0]!.message, /Too many redirects\./);
+			assert.equal(destroy.mock.callCount(), 1);
 		});
 	});
 });

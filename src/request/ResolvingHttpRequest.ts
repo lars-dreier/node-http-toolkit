@@ -81,12 +81,12 @@ export default class ResolvingHttpRequest {
 			case HttpStatusCode.PARTIAL_CONTENT: {
 				const range: string | undefined = response.headers['content-range'];
 				if (range == null) {
-					this.handleError(new Error('Partial content without range header.'));
+					this.failResponse(response, new Error('Partial content without range header.'));
 					break;
 				}
 				const match: RegExpMatchArray | null = range.match(ResolvingHttpRequest.CONTENT_RANGE_RESPONSE_REGEX);
 				if (match == null) {
-					this.handleError(new Error('Invalid range header.'));
+					this.failResponse(response, new Error('Invalid range header.'));
 					break;
 				}
 				const start: number = parseInt(match[1]!, 10);
@@ -108,7 +108,7 @@ export default class ResolvingHttpRequest {
 			default: {
 				const statusCode: number | undefined = response.statusCode;
 				if (statusCode == null) {
-					this.handleError(new Error('Response without status code.'));
+					this.failResponse(response, new Error('Response without status code.'));
 					break;
 				}
 				if (statusCode >= HttpStatusCode.BAD_REQUEST) {
@@ -118,7 +118,7 @@ export default class ResolvingHttpRequest {
 					statusCode >= HttpStatusCode.MULTIPLE_CHOICES
 					|| statusCode < HttpStatusCode.OK
 				) {
-					this.handleError(new Error(`Unhandled status code: ${statusCode}`));
+					this.failResponse(response, new Error(`Unhandled status code: ${statusCode}`));
 				}
 				else {
 					this.handleSuccessResponse(response);
@@ -133,6 +133,7 @@ export default class ResolvingHttpRequest {
 	}
 
 	private handleRedirectResponse(response: http.IncomingMessage, method: string): void {
+		response.destroy();
 		if (this._redirects >= this.maxRedirects) {
 			this.handleError(new Error('Too many redirects.'));
 			return;
@@ -152,6 +153,11 @@ export default class ResolvingHttpRequest {
 		void new HttpErrorBodyReader().read(response).then((body: Buffer) => {
 			this.handleError(new HttpError(statusCode, response.statusMessage ?? '', response.headers, body));
 		});
+	}
+
+	private failResponse(response: http.IncomingMessage, error: Error): void {
+		response.destroy();
+		this.handleError(error);
 	}
 
 	private handleError(error: Error): void {
