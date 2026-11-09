@@ -1,6 +1,6 @@
 {
 	"name": "node-http-toolkit",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Resumable, parallel file downloads for Node.js, plus HTTP requests with redirect and decompression handling.",
 	"type": "module",
 	"types": "./dist/index.d.mts",
