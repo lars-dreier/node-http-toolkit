@@ -23,6 +23,20 @@ function run(request: ResolvingHttpRequest): Promise<http.IncomingMessage> {
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Runs the request to its first error, then waits to catch any duplicate error. */
+async function collectErrors(request: ResolvingHttpRequest): Promise<Error[]> {
+	const errors: Error[] = [];
+	await new Promise<void>((resolve) => {
+		request.onError = (error) => {
+			errors.push(error);
+			resolve();
+		};
+		request.resolve();
+	});
+	await delay(50);
+	return errors;
+}
+
 describe('ResolvingHttpRequest', () => {
 	describe('onResponse (stubbed responses)', () => {
 		let request: ResolvingHttpRequest;
@@ -74,21 +88,6 @@ describe('ResolvingHttpRequest', () => {
 		it('errors a 206 with an invalid range header', () => {
 			dispatch(request, TestHelper.stubResponse(206, { 'content-range': 'pages 0-499/1234' }));
 			assert.match(errors[0]!.message, /Invalid range header\./);
-		});
-
-		it('surfaces a 4xx as a single HttpError [#7]', () => {
-			dispatch(request, TestHelper.stubResponse(404, {}));
-			assert.equal(errors.length, 1);
-			const error: Error | undefined = errors[0];
-			assert.ok(error instanceof HttpError);
-			assert.equal(error.statusCode, 404);
-			assert.equal(resolved, undefined);
-		});
-
-		it('surfaces a 5xx as a single HttpError [#7]', () => {
-			dispatch(request, TestHelper.stubResponse(500, {}));
-			assert.equal(errors.length, 1);
-			assert.ok(errors[0] instanceof HttpError);
 		});
 
 		it('errors when the status code is missing', () => {
@@ -271,6 +270,94 @@ describe('ResolvingHttpRequest', () => {
 			assert.equal(response.statusCode, 200);
 			assert.equal(await TestHelper.readBody(response), 'hello world');
 			assert.equal(request.totalBytes, 0);
+		});
+	});
+
+	describe('error responses (loopback)', () => {
+		let server: http.Server | undefined;
+
+		afterEach(async () => {
+			if (server === undefined) {
+				return;
+			}
+			const running: http.Server = server;
+			server = undefined;
+			await new Promise<void>((resolve) => running.close(() => resolve()));
+		});
+
+		it('surfaces a 4xx as a single HttpError [#7]', async () => {
+			// Given a server that replies 404
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(404);
+				res.end('missing');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const errors: Error[] = await collectErrors(new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET));
+
+			// Then exactly one HttpError is reported
+			assert.equal(errors.length, 1);
+			const error: Error | undefined = errors[0];
+			assert.ok(error instanceof HttpError);
+			assert.equal(error.statusCode, 404);
+		});
+
+		it('surfaces a 5xx as a single HttpError [#7]', async () => {
+			// Given a server that replies 500
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(500);
+				res.end('broken');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const errors: Error[] = await collectErrors(new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET));
+
+			// Then exactly one HttpError is reported
+			assert.equal(errors.length, 1);
+			assert.ok(errors[0] instanceof HttpError);
+		});
+
+		it('exposes the body and headers of a 403 on the HttpError', async () => {
+			// Given a server that explains the 403 in its body and headers
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(403, 'Forbidden', { 'x-request-id': 'abc123' });
+				res.end('{"reason":"token lacks scope"}');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const request = new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET);
+
+			// Then the error carries both
+			await assert.rejects(run(request), (error: unknown) => {
+				assert.ok(error instanceof HttpError);
+				assert.equal(error.statusCode, 403);
+				assert.equal(error.statusMessage, 'Forbidden');
+				assert.equal(error.headers?.['x-request-id'], 'abc123');
+				assert.equal(error.body?.toString(), '{"reason":"token lacks scope"}');
+				return true;
+			});
+		});
+
+		it('caps a large error body at 64 KiB', async () => {
+			// Given a server that replies 403 with a body above the cap
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(403);
+				res.end(Buffer.alloc(200 * 1024, 'x'));
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const request = new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET);
+
+			// Then only the capped prefix is retained
+			await assert.rejects(run(request), (error: unknown) => {
+				assert.ok(error instanceof HttpError);
+				assert.equal(error.body?.length, 64 * 1024);
+				return true;
+			});
 		});
 	});
 });

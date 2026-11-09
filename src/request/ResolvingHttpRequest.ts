@@ -2,6 +2,7 @@ import type * as http from 'http';
 import HttpError from '../http/HttpError.ts';
 import { HttpMethod } from '../http/HttpMethod.ts';
 import { HttpStatusCode } from '../http/HttpStatusCode.ts';
+import HttpErrorBodyReader from '../response/HttpErrorBodyReader.ts';
 import HttpRequest from './HttpRequest.ts';
 
 /**
@@ -90,8 +91,7 @@ export default class ResolvingHttpRequest {
 				}
 				const start: number = parseInt(match[1]!, 10);
 				const end: number = parseInt(match[2]!, 10);
-				const total: number = parseInt(match[3]!, 10);
-				this._totalBytes = total;
+				this._totalBytes = parseInt(match[3]!, 10);
 				this._requestedBytes = end - start + 1;
 				this.handleSuccessResponse(response);
 				break;
@@ -112,7 +112,7 @@ export default class ResolvingHttpRequest {
 					break;
 				}
 				if (statusCode >= HttpStatusCode.BAD_REQUEST) {
-					this.handleErrorResponse(response);
+					this.handleErrorResponse(response, statusCode);
 				}
 				else if (
 					statusCode >= HttpStatusCode.MULTIPLE_CHOICES
@@ -148,12 +148,10 @@ export default class ResolvingHttpRequest {
 		}
 	}
 
-	private handleErrorResponse(response: http.IncomingMessage): void {
-		response.destroy();
-		const error: Error = response.statusCode == null
-			? new Error('Response without status code.')
-			: new HttpError(response.statusCode, response.statusMessage ?? '');
-		this.handleError(error);
+	private handleErrorResponse(response: http.IncomingMessage, statusCode: number): void {
+		void new HttpErrorBodyReader().read(response).then((body: Buffer) => {
+			this.handleError(new HttpError(statusCode, response.statusMessage ?? '', response.headers, body));
+		});
 	}
 
 	private handleError(error: Error): void {
