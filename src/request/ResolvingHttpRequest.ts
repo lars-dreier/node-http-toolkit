@@ -2,6 +2,7 @@ import type * as http from 'http';
 import HttpError from '../http/HttpError.ts';
 import { HttpMethod } from '../http/HttpMethod.ts';
 import { HttpStatusCode } from '../http/HttpStatusCode.ts';
+import HttpErrorBodyReader from '../response/HttpErrorBodyReader.ts';
 import HttpRequest from './HttpRequest.ts';
 
 /**
@@ -80,18 +81,17 @@ export default class ResolvingHttpRequest {
 			case HttpStatusCode.PARTIAL_CONTENT: {
 				const range: string | undefined = response.headers['content-range'];
 				if (range == null) {
-					this.handleError(new Error('Partial content without range header.'));
+					this.failResponse(response, new Error('Partial content without range header.'));
 					break;
 				}
 				const match: RegExpMatchArray | null = range.match(ResolvingHttpRequest.CONTENT_RANGE_RESPONSE_REGEX);
 				if (match == null) {
-					this.handleError(new Error('Invalid range header.'));
+					this.failResponse(response, new Error('Invalid range header.'));
 					break;
 				}
 				const start: number = parseInt(match[1]!, 10);
 				const end: number = parseInt(match[2]!, 10);
-				const total: number = parseInt(match[3]!, 10);
-				this._totalBytes = total;
+				this._totalBytes = parseInt(match[3]!, 10);
 				this._requestedBytes = end - start + 1;
 				this.handleSuccessResponse(response);
 				break;
@@ -108,17 +108,17 @@ export default class ResolvingHttpRequest {
 			default: {
 				const statusCode: number | undefined = response.statusCode;
 				if (statusCode == null) {
-					this.handleError(new Error('Response without status code.'));
+					this.failResponse(response, new Error('Response without status code.'));
 					break;
 				}
 				if (statusCode >= HttpStatusCode.BAD_REQUEST) {
-					this.handleErrorResponse(response);
+					this.handleErrorResponse(response, statusCode);
 				}
 				else if (
 					statusCode >= HttpStatusCode.MULTIPLE_CHOICES
 					|| statusCode < HttpStatusCode.OK
 				) {
-					this.handleError(new Error(`Unhandled status code: ${statusCode}`));
+					this.failResponse(response, new Error(`Unhandled status code: ${statusCode}`));
 				}
 				else {
 					this.handleSuccessResponse(response);
@@ -133,6 +133,7 @@ export default class ResolvingHttpRequest {
 	}
 
 	private handleRedirectResponse(response: http.IncomingMessage, method: string): void {
+		response.destroy();
 		if (this._redirects >= this.maxRedirects) {
 			this.handleError(new Error('Too many redirects.'));
 			return;
@@ -148,11 +149,14 @@ export default class ResolvingHttpRequest {
 		}
 	}
 
-	private handleErrorResponse(response: http.IncomingMessage): void {
+	private handleErrorResponse(response: http.IncomingMessage, statusCode: number): void {
+		void new HttpErrorBodyReader().read(response).then((body: Buffer) => {
+			this.handleError(new HttpError(statusCode, response.statusMessage ?? '', response.headers, body));
+		});
+	}
+
+	private failResponse(response: http.IncomingMessage, error: Error): void {
 		response.destroy();
-		const error: Error = response.statusCode == null
-			? new Error('Response without status code.')
-			: new HttpError(response.statusCode, response.statusMessage ?? '');
 		this.handleError(error);
 	}
 

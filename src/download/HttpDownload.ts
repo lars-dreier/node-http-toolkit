@@ -166,13 +166,23 @@ export default class HttpDownload implements IHttpDownload {
 		try {
 			const request = new AsyncResolvingHttpRequest(url, method, headers);
 			const result: http.IncomingMessage = await request.resolve();
-			const responseSize = HttpResponseSize.parse(result);
+			const responseSize: HttpResponseSize = this.parseResponseSize(result);
 			this._totalBytes = responseSize.totalBytes;
 			this._requestedBytes = responseSize.contentLength;
 			this.handleSuccessResponse(result);
 		}
 		catch (error) {
 			this.handleError(error as Error);
+		}
+	}
+
+	private parseResponseSize(response: http.IncomingMessage): HttpResponseSize {
+		try {
+			return HttpResponseSize.parse(response);
+		}
+		catch (error) {
+			response.destroy();
+			throw error;
 		}
 	}
 

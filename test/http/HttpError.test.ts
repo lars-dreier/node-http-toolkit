@@ -39,4 +39,21 @@ describe('HttpError', () => {
 		// Then it labels itself in stack traces and logs
 		assert.equal(error.name, 'HttpError');
 	});
+
+	it('exposes the response headers and body when provided', () => {
+		// Given an error built with the response details
+		const body: Buffer = Buffer.from('{"reason":"denied"}');
+		const error = new HttpError(403, 'Forbidden', { 'retry-after': '30' }, body);
+		// Then they are readable
+		assert.deepEqual(error.headers, { 'retry-after': '30' });
+		assert.equal(error.body, body);
+	});
+
+	it('leaves the headers and body undefined when omitted', () => {
+		// Given an error built from status alone
+		const error = new HttpError(403, 'Forbidden');
+		// Then the response details are absent
+		assert.equal(error.headers, undefined);
+		assert.equal(error.body, undefined);
+	});
 });

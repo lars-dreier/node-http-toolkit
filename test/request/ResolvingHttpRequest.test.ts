@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type * as http from 'node:http';
-import { afterEach, beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import HttpError from '../../src/http/HttpError.ts';
 import { HttpMethod } from '../../src/http/HttpMethod.ts';
@@ -22,6 +22,20 @@ function run(request: ResolvingHttpRequest): Promise<http.IncomingMessage> {
 }
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Runs the request to its first error, then waits to catch any duplicate error. */
+async function collectErrors(request: ResolvingHttpRequest): Promise<Error[]> {
+	const errors: Error[] = [];
+	await new Promise<void>((resolve) => {
+		request.onError = (error) => {
+			errors.push(error);
+			resolve();
+		};
+		request.resolve();
+	});
+	await delay(50);
+	return errors;
+}
 
 describe('ResolvingHttpRequest', () => {
 	describe('onResponse (stubbed responses)', () => {
@@ -74,21 +88,6 @@ describe('ResolvingHttpRequest', () => {
 		it('errors a 206 with an invalid range header', () => {
 			dispatch(request, TestHelper.stubResponse(206, { 'content-range': 'pages 0-499/1234' }));
 			assert.match(errors[0]!.message, /Invalid range header\./);
-		});
-
-		it('surfaces a 4xx as a single HttpError [#7]', () => {
-			dispatch(request, TestHelper.stubResponse(404, {}));
-			assert.equal(errors.length, 1);
-			const error: Error | undefined = errors[0];
-			assert.ok(error instanceof HttpError);
-			assert.equal(error.statusCode, 404);
-			assert.equal(resolved, undefined);
-		});
-
-		it('surfaces a 5xx as a single HttpError [#7]', () => {
-			dispatch(request, TestHelper.stubResponse(500, {}));
-			assert.equal(errors.length, 1);
-			assert.ok(errors[0] instanceof HttpError);
 		});
 
 		it('errors when the status code is missing', () => {
@@ -254,6 +253,37 @@ describe('ResolvingHttpRequest', () => {
 			await assert.rejects(run(request), /Missing Location header on redirect\./);
 		});
 
+		it('destroys a followed redirect response instead of leaving its connection open', async () => {
+			// Given a redirect whose body never finishes
+			let startResponse: http.ServerResponse | undefined;
+			let closedBeforeEnd: boolean = false;
+			const started = await TestHelper.startLoopbackServer((req, res) => {
+				if (req.url === '/start') {
+					startResponse = res;
+					res.on('close', () => {
+						closedBeforeEnd = !res.writableEnded;
+					});
+					res.writeHead(301, { location: `http://${req.headers.host}/target` });
+					res.write('partial');
+				}
+				else {
+					res.writeHead(200, { 'content-length': '2' });
+					res.end('ok');
+				}
+			});
+			server = started.server;
+
+			// When the redirect is followed
+			const request = new ResolvingHttpRequest(`${started.url}/start`, HttpMethod.GET);
+			const response: http.IncomingMessage = await run(request);
+			response.destroy();
+			await delay(50);
+			startResponse?.end();
+
+			// Then the client closed the redirect's connection without waiting for its body
+			assert.equal(closedBeforeEnd, true);
+		});
+
 		it('resolves a chunked 200 that omits content-length', async () => {
 			// Given a server that replies 200 with a chunked body and no content-length
 			const started = await TestHelper.startLoopbackServer((_req, res) => {
@@ -271,6 +301,154 @@ describe('ResolvingHttpRequest', () => {
 			assert.equal(response.statusCode, 200);
 			assert.equal(await TestHelper.readBody(response), 'hello world');
 			assert.equal(request.totalBytes, 0);
+		});
+	});
+
+	describe('error responses (loopback)', () => {
+		let server: http.Server | undefined;
+
+		afterEach(async () => {
+			if (server === undefined) {
+				return;
+			}
+			const running: http.Server = server;
+			server = undefined;
+			await new Promise<void>((resolve) => running.close(() => resolve()));
+		});
+
+		it('surfaces a 4xx as a single HttpError [#7]', async () => {
+			// Given a server that replies 404
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(404);
+				res.end('missing');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const errors: Error[] = await collectErrors(new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET));
+
+			// Then exactly one HttpError is reported
+			assert.equal(errors.length, 1);
+			const error: Error | undefined = errors[0];
+			assert.ok(error instanceof HttpError);
+			assert.equal(error.statusCode, 404);
+		});
+
+		it('surfaces a 5xx as a single HttpError [#7]', async () => {
+			// Given a server that replies 500
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(500);
+				res.end('broken');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const errors: Error[] = await collectErrors(new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET));
+
+			// Then exactly one HttpError is reported
+			assert.equal(errors.length, 1);
+			assert.ok(errors[0] instanceof HttpError);
+		});
+
+		it('exposes the body and headers of a 403 on the HttpError', async () => {
+			// Given a server that explains the 403 in its body and headers
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(403, 'Forbidden', { 'x-request-id': 'abc123' });
+				res.end('{"reason":"token lacks scope"}');
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const request = new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET);
+
+			// Then the error carries both
+			await assert.rejects(run(request), (error: unknown) => {
+				assert.ok(error instanceof HttpError);
+				assert.equal(error.statusCode, 403);
+				assert.equal(error.statusMessage, 'Forbidden');
+				assert.equal(error.headers?.['x-request-id'], 'abc123');
+				assert.equal(error.body?.toString(), '{"reason":"token lacks scope"}');
+				return true;
+			});
+		});
+
+		it('caps a large error body at 64 KiB', async () => {
+			// Given a server that replies 403 with a body above the cap
+			const started = await TestHelper.startLoopbackServer((_req, res) => {
+				res.writeHead(403);
+				res.end(Buffer.alloc(200 * 1024, 'x'));
+			});
+			server = started.server;
+
+			// When the request is resolved
+			const request = new ResolvingHttpRequest(`${started.url}/`, HttpMethod.GET);
+
+			// Then only the capped prefix is retained
+			await assert.rejects(run(request), (error: unknown) => {
+				assert.ok(error instanceof HttpError);
+				assert.equal(error.body?.length, 64 * 1024);
+				return true;
+			});
+		});
+	});
+
+	describe('response cleanup on failure', () => {
+		const scenarios: {
+			name: string;
+			statusCode: number | undefined;
+			headers: http.IncomingHttpHeaders;
+			message: RegExp;
+		}[] = [
+			{
+				name: 'a 206 with no range header',
+				statusCode: 206,
+				headers: {},
+				message: /Partial content without range header\./
+			},
+			{
+				name: 'a 206 with an invalid range header',
+				statusCode: 206,
+				headers: { 'content-range': 'pages 0-499/1234' },
+				message: /Invalid range header\./
+			},
+			{ name: 'an unhandled status (305)', statusCode: 305, headers: {}, message: /Unhandled status code: 305/ },
+			{ name: 'a missing status code', statusCode: undefined, headers: {}, message: /Response without status code\./ },
+			{ name: 'a redirect without a Location header', statusCode: 301, headers: {}, message: /Missing Location header/ }
+		];
+
+		for (const scenario of scenarios) {
+			it(`destroys the response for ${scenario.name}`, () => {
+				// Given a response this request cannot use
+				const request = new ResolvingHttpRequest('http://127.0.0.1/', HttpMethod.GET);
+				const errors: Error[] = [];
+				request.onError = (error) => errors.push(error);
+				const response: http.IncomingMessage = TestHelper.stubResponse(scenario.statusCode, scenario.headers);
+				const destroy = mock.method(response, 'destroy');
+
+				// When it is dispatched
+				dispatch(request, response);
+
+				// Then the error is reported and the response is released once
+				assert.match(errors[0]!.message, scenario.message);
+				assert.equal(destroy.mock.callCount(), 1);
+			});
+		}
+
+		it('destroys the response when the redirect limit is exceeded', () => {
+			// Given a request that allows no redirects
+			const request = new ResolvingHttpRequest('http://127.0.0.1/', HttpMethod.GET);
+			request.maxRedirects = 0;
+			const errors: Error[] = [];
+			request.onError = (error) => errors.push(error);
+			const response: http.IncomingMessage = TestHelper.stubResponse(302, { location: '/next' });
+			const destroy = mock.method(response, 'destroy');
+
+			// When a redirect is dispatched
+			dispatch(request, response);
+
+			// Then the error is reported and the response is released once
+			assert.match(errors[0]!.message, /Too many redirects\./);
+			assert.equal(destroy.mock.callCount(), 1);
 		});
 	});
 });

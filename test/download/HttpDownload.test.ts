@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import HttpDownload from '../../src/download/HttpDownload.ts';
 import TestHelper from '../TestHelper.ts';
 
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 describe('HttpDownload', () => {
 	let server: http.Server | undefined;
 	let tempDir: string;
@@ -50,5 +52,34 @@ describe('HttpDownload', () => {
 		assert.equal(download.totalBytes, 0);
 		assert.equal(download.downloadedBytes, 11);
 		assert.equal(download.isComplete, true);
+	});
+
+	it('destroys the response when its size cannot be parsed', async () => {
+		// Given a 206 with no content-length whose body never finishes
+		let serverResponse: http.ServerResponse | undefined;
+		let closedBeforeEnd: boolean = false;
+		const started = await TestHelper.startLoopbackServer((_req, res) => {
+			serverResponse = res;
+			res.on('close', () => {
+				closedBeforeEnd = !res.writableEnded;
+			});
+			res.writeHead(206, { 'content-range': 'bytes 0-9/100' });
+			res.write('partial');
+		});
+		server = started.server;
+
+		// When the download fails on the unparseable size
+		const download = new HttpDownload(`${started.url}/`, path.join(tempDir, 'partial.bin'));
+		const error: Error = await new Promise<Error>((resolve, reject) => {
+			download.onComplete = () => reject(new Error('Expected the download to fail.'));
+			download.onError = (_d, failure) => resolve(failure);
+			download.start();
+		});
+		await delay(50);
+		serverResponse?.end();
+
+		// Then the error is reported and the client closed the connection without waiting for the body
+		assert.match(error.message, /Missing content length header\./);
+		assert.equal(closedBeforeEnd, true);
 	});
 });
